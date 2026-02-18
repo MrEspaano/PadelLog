@@ -97,7 +97,7 @@ export function DashboardOverview() {
             <CardHeader className="pb-2">
               <CardDescription>Senaste vikt</CardDescription>
               <CardTitle className="metric-nums">{lastWeight ? `${lastWeight.toFixed(1)} kg` : "Ingen data"}</CardTitle>
-              <BallAccentBadge label="Statistik" className="mt-2 w-fit" />
+              <BallAccentBadge label="Statistik" className="mt-1 w-fit" />
             </CardHeader>
           </Card>
         </motion.div>
@@ -107,7 +107,7 @@ export function DashboardOverview() {
             <CardHeader className="pb-2">
               <CardDescription>Pass senaste 7 dagar</CardDescription>
               <CardTitle className="metric-nums">{loading ? "..." : lastSevenDays.length}</CardTitle>
-              <BallAccentBadge label="Volym" className="mt-2 w-fit" />
+              <BallAccentBadge label="Volym" className="mt-1 w-fit" />
             </CardHeader>
           </Card>
         </motion.div>
@@ -117,7 +117,7 @@ export function DashboardOverview() {
             <CardHeader className="pb-2">
               <CardDescription>Coach-KPI</CardDescription>
               <CardTitle className="metric-nums">{coachKpi ?? "Behöver fler pass"}</CardTitle>
-              <BallAccentBadge label="Analys" className="mt-2 w-fit" />
+              <BallAccentBadge label="Analys" className="mt-1 w-fit" />
             </CardHeader>
           </Card>
         </motion.div>
