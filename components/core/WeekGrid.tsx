@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { BallAccentBadge } from "@/components/padel/BallAccentBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +68,7 @@ export function WeekGrid() {
   }, [endDate, startDate]);
 
   return (
-    <Card>
+    <Card className="mat-surface">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -97,8 +98,8 @@ export function WeekGrid() {
                 key={isoDay}
                 type="button"
                 onClick={() => setSelectedDate(isoDay)}
-                className={`rounded-lg border p-3 text-left transition ${
-                  isSelected ? "border-primary bg-primary/10" : "hover:bg-muted/60"
+                className={`rounded-xl border p-3 text-left transition ${
+                  isSelected ? "border-primary bg-primary/10 shadow-soft" : "hover:bg-muted/60"
                 }`}
               >
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{weekdayLabel(day)}</p>
@@ -109,7 +110,7 @@ export function WeekGrid() {
                   ) : (
                     <div className="space-y-1">
                       {dayWorkouts.slice(0, 2).map((workout) => (
-                        <div key={workout.id} className="rounded bg-white/80 px-2 py-1">
+                        <div key={workout.id} className="rounded bg-white/85 px-2 py-1">
                           {formatTypeLabel(workout.type)} · {workout.duration_min} min
                         </div>
                       ))}
@@ -131,7 +132,7 @@ export function WeekGrid() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-lg border bg-white/70 p-4"
+            className="rounded-xl border border-padel-line/60 bg-white/75 p-4"
           >
             <div className="mb-3 flex items-center justify-between">
               <h4 className="font-semibold">{format(parseISODate(selectedDate), "EEEE d MMMM")}</h4>
@@ -139,7 +140,10 @@ export function WeekGrid() {
             </div>
 
             {selectedWorkouts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Ingen träning loggad denna dag.</p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Ingen träning loggad denna dag.</p>
+                <BallAccentBadge label="Vila" />
+              </div>
             ) : (
               <div className="space-y-2">
                 {selectedWorkouts.map((workout) => (

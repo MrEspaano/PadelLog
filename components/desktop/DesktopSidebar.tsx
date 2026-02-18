@@ -5,16 +5,20 @@ import { usePathname } from "next/navigation";
 
 import { SignOutButton } from "@/components/core/SignOutButton";
 import { NAV_ITEMS } from "@/components/layout/nav";
+import { PadelIcon } from "@/components/padel/PadelIcon";
 import { cn } from "@/lib/utils/cn";
 
 export function DesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r bg-white/80 p-5 backdrop-blur lg:flex lg:flex-col">
-      <div className="rounded-xl bg-gradient-to-r from-accent-teal to-accent-purple p-4 text-white shadow-soft">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em]">PadelLog</p>
-        <h1 className="mt-1 text-xl font-bold">Träning & Analys</h1>
+    <aside className="mat-surface sticky top-0 hidden h-screen w-72 shrink-0 border-r border-padel-line/60 bg-white/85 p-5 lg:flex lg:flex-col">
+      <div className="court-lines rounded-2xl border border-padel-line/60 bg-gradient-to-br from-padel-blue to-padel-blue-soft p-4 text-white shadow-stadium">
+        <div className="flex items-center gap-2">
+          <PadelIcon mode="logo" className="h-6 w-6 text-white" />
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]">PadelLog</p>
+        </div>
+        <h1 className="mt-2 text-xl font-bold">Träning & Analys</h1>
       </div>
 
       <nav className="mt-6 space-y-1">
@@ -26,8 +30,10 @@ export function DesktopSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                "flex items-center gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition",
+                isActive
+                  ? "border-padel-line/70 bg-primary text-primary-foreground shadow-glow-blue"
+                  : "border-transparent text-muted-foreground hover:border-padel-line/50 hover:bg-white"
               )}
             >
               <Icon className="h-4 w-4" />

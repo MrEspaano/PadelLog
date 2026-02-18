@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Barlow, Space_Grotesk } from "next/font/google";
 
 import "@/app/globals.css";
 import { cn } from "@/lib/utils/cn";
 
-const plusJakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
+const barlow = Barlow({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans"
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-display"
+});
 
 export const metadata: Metadata = {
   title: "PadelLog",
@@ -14,7 +24,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="sv">
-      <body className={cn(plusJakarta.className, "min-h-screen")}>{children}</body>
+      <body className={cn(barlow.variable, barlow.className, spaceGrotesk.variable, "min-h-screen")}>{children}</body>
     </html>
   );
 }

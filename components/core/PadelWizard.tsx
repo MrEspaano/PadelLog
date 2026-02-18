@@ -1,9 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
+import { BallAccentBadge } from "@/components/padel/BallAccentBadge";
+import { PadelIcon } from "@/components/padel/PadelIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +63,8 @@ export function PadelWizard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<WizardState | null>(null);
+  const [savedPulse, setSavedPulse] = useState(0);
+  const [showSavedPulse, setShowSavedPulse] = useState(false);
 
   const currentStep = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
@@ -74,6 +78,14 @@ export function PadelWizard() {
         .filter(Boolean),
     [state.tags]
   );
+
+  useEffect(() => {
+    if (savedPulse === 0) return;
+
+    setShowSavedPulse(true);
+    const timeout = window.setTimeout(() => setShowSavedPulse(false), 900);
+    return () => window.clearTimeout(timeout);
+  }, [savedPulse]);
 
   function nextStep() {
     setStepIndex((value) => Math.min(value + 1, steps.length - 1));
@@ -123,6 +135,7 @@ export function PadelWizard() {
       setSummary(state);
       setState(initialState);
       setStepIndex(0);
+      setSavedPulse((value) => value + 1);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Kunde inte spara padelpass.");
     } finally {
@@ -134,11 +147,14 @@ export function PadelWizard() {
     <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Padel-logg</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="font-display">Padel-logg</CardTitle>
+            <BallAccentBadge label="Logg" />
+          </div>
           <CardDescription>En fråga i taget. Du kan hoppa över valfria steg.</CardDescription>
-          <div className="h-2 w-full rounded-full bg-muted">
+          <div className="h-2 w-full rounded-full bg-padel-court">
             <div
-              className="h-2 rounded-full bg-gradient-to-r from-accent-teal to-accent-purple transition-all"
+              className="h-2 rounded-full bg-gradient-to-r from-padel-lime via-padel-blue-soft to-padel-blue transition-all"
               style={{ width: progressWidth(stepIndex) }}
             />
           </div>
@@ -152,7 +168,7 @@ export function PadelWizard() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -14 }}
               transition={{ duration: 0.22 }}
-              className="rounded-lg border bg-white/80 p-4"
+              className="rounded-xl border border-padel-line/60 bg-white/85 p-4"
             >
               <p className="text-sm text-muted-foreground">
                 Steg {stepIndex + 1}/{steps.length}
@@ -305,6 +321,21 @@ export function PadelWizard() {
 
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
+          <AnimatePresence>
+            {showSavedPulse ? (
+              <motion.div
+                key={savedPulse}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: [0, -6, 0] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.45 }}
+                className="flex justify-end"
+              >
+                <BallAccentBadge label="Pass sparat" />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Button variant="outline" onClick={previousStep} disabled={!canGoBack || saving}>
               <ArrowLeft className="mr-1 h-4 w-4" />
@@ -320,7 +351,7 @@ export function PadelWizard() {
 
               {isLastStep ? (
                 <Button onClick={() => void saveSession()} disabled={saving || state.durationMin <= 0}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PadelIcon mode="ball" className="h-4 w-4" />}
                   Spara pass
                 </Button>
               ) : (
@@ -336,17 +367,23 @@ export function PadelWizard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Sammanfattning</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="font-display">Sammanfattning</CardTitle>
+            <PadelIcon mode="racket" className="h-4 w-4 text-padel-blue-soft" />
+          </div>
           <CardDescription>Visas efter sparning.</CardDescription>
         </CardHeader>
         <CardContent>
           {!summary ? (
-            <p className="text-sm text-muted-foreground">Inget sparat pass ännu i denna session.</p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Inga pass loggade än i denna session.</p>
+              <BallAccentBadge label="Tomt läge" />
+            </div>
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-3 rounded-lg border bg-muted/40 p-4"
+              className="space-y-3 rounded-xl border border-padel-line/60 bg-muted/40 p-4"
             >
               <div className="flex flex-wrap gap-2">
                 <Badge>{summary.date}</Badge>

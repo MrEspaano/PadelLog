@@ -1,19 +1,24 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
+import { Activity, ArrowRight, Scale, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { BallAccentBadge } from "@/components/padel/BallAccentBadge";
+import { CourtDivider } from "@/components/padel/CourtDivider";
+import { PadelIcon } from "@/components/padel/PadelIcon";
 import { WeekGrid } from "@/components/core/WeekGrid";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { analyzeCriticalCoach } from "@/lib/analysis/criticalCoach";
 import { fetchLatestPadelSessions, fetchWeights, fetchWorkouts } from "@/lib/data/queries";
 import type { WeightEntry, WorkoutWithPadel } from "@/lib/types";
 
 const quickLinks = [
-  { href: "/padel", title: "Logga padelpass", description: "Stegvis loggning, en fråga i taget" },
-  { href: "/weights", title: "Uppdatera vikt", description: "Söndagsfokus + snabbknapp idag" },
-  { href: "/workouts", title: "Analysera passlogg", description: "Filter, datagrid och export" }
+  { href: "/padel", title: "Logga padelpass", description: "Stegvis loggning, en fråga i taget", icon: Activity },
+  { href: "/weights", title: "Uppdatera vikt", description: "Söndagsfokus + snabbknapp idag", icon: Scale },
+  { href: "/workouts", title: "Analysera passlogg", description: "Filter, datagrid och export", icon: Sparkles }
 ];
 
 export function DashboardOverview() {
@@ -59,46 +64,99 @@ export function DashboardOverview() {
   }, [workouts]);
 
   const coachInsight = useMemo(() => analyzeCriticalCoach(padel.slice(0, 6)), [padel]);
-  const coachKpi = coachInsight?.kpiValue && !coachInsight.kpiValue.includes("NaN")
-    ? coachInsight.kpiValue
-    : null;
+  const coachKpi = coachInsight?.kpiValue && !coachInsight.kpiValue.includes("NaN") ? coachInsight.kpiValue : null;
 
   return (
     <div className="space-y-4">
+      <section className="court-lines mat-surface relative overflow-hidden rounded-2xl border border-padel-line/70 bg-gradient-to-r from-padel-blue to-padel-blue-soft p-5 text-white shadow-stadium">
+        <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/10 to-transparent md:block" />
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <PadelIcon mode="logo" className="h-6 w-6 text-white" />
+              <BallAccentBadge label="Padel Focus" className="border-white/30 bg-white/12 text-white" />
+            </div>
+            <h3 className="font-display text-2xl font-semibold">Bygg form med tydlig matchdata</h3>
+            <p className="mt-1 text-sm text-white/85">Följ intensitet, känsla och resultat med samma precision som på banan.</p>
+          </div>
+          <Link
+            href="/padel"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20"
+          >
+            Logga nytt pass
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
       <div className="grid gap-3 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Senaste vikt</CardDescription>
-            <CardTitle>{lastWeight ? `${lastWeight.toFixed(1)} kg` : "Ingen data"}</CardTitle>
-          </CardHeader>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Senaste vikt</CardDescription>
+              <CardTitle className="metric-nums">{lastWeight ? `${lastWeight.toFixed(1)} kg` : "Ingen data"}</CardTitle>
+              <BallAccentBadge label="Statistik" className="mt-2 w-fit" />
+            </CardHeader>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Pass senaste 7 dagar</CardDescription>
-            <CardTitle>{loading ? "..." : lastSevenDays.length}</CardTitle>
-          </CardHeader>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Pass senaste 7 dagar</CardDescription>
+              <CardTitle className="metric-nums">{loading ? "..." : lastSevenDays.length}</CardTitle>
+              <BallAccentBadge label="Volym" className="mt-2 w-fit" />
+            </CardHeader>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Coach-KPI</CardDescription>
-            <CardTitle>{coachKpi ?? "Behöver fler pass"}</CardTitle>
-          </CardHeader>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Coach-KPI</CardDescription>
+              <CardTitle className="metric-nums">{coachKpi ?? "Behöver fler pass"}</CardTitle>
+              <BallAccentBadge label="Analys" className="mt-2 w-fit" />
+            </CardHeader>
+          </Card>
+        </motion.div>
       </div>
 
+      <CourtDivider />
+
       <div className="grid gap-3 md:grid-cols-3">
-        {quickLinks.map((link) => (
-          <Link key={link.href} href={link.href} className="rounded-xl border bg-white/70 p-4 transition hover:bg-white">
-            <p className="text-sm font-semibold">{link.title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{link.description}</p>
-            <Badge className="mt-3">Öppna</Badge>
-          </Link>
-        ))}
+        {quickLinks.map((link) => {
+          const Icon = link.icon;
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="group relative rounded-2xl border border-padel-line/60 bg-white/85 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-blue"
+            >
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-padel-court text-padel-blue">
+                <Icon className="h-4 w-4" />
+              </div>
+              <p className="text-sm font-semibold">{link.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{link.description}</p>
+              <Badge className="mt-3">Öppna</Badge>
+              <div className="absolute inset-x-4 bottom-0 h-0.5 scale-x-0 bg-gradient-to-r from-padel-lime via-padel-blue-soft to-padel-lime transition-transform duration-200 group-hover:scale-x-100" />
+            </Link>
+          );
+        })}
       </div>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+      {workouts.length === 0 && !loading ? (
+        <Card>
+          <CardContent className="py-6">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">Inga pass loggade än. Starta med ditt första padelpass.</p>
+              <BallAccentBadge label="Tomt läge" />
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <WeekGrid />
     </div>

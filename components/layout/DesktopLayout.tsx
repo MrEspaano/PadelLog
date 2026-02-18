@@ -14,7 +14,7 @@ export function DesktopLayout({ children, title, userEmail }: DesktopLayoutProps
       <DesktopSidebar />
       <div className="flex-1 p-6">
         <DesktopTopbar title={title} userEmail={userEmail} />
-        <main>{children}</main>
+        <main className="space-y-4">{children}</main>
       </div>
     </div>
   );
