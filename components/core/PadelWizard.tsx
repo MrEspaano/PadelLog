@@ -217,7 +217,10 @@ export function PadelWizard() {
                     <option value="">Välj</option>
                     <option value="match">Match</option>
                     <option value="träning">Träning</option>
+                    <option value="träningsmatch">Träningsmatch</option>
                     <option value="americano">Americano</option>
+                    <option value="vinnarbana">Vinnarbana</option>
+                    <option value="vinnarbana split">Vinnarbana split</option>
                     <option value="seriespel">Seriespel</option>
                     <option value="other">Annat</option>
                   </Select>
