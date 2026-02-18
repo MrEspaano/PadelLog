@@ -134,7 +134,7 @@ export function PadelWizard() {
     <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Padel-logg (wizard)</CardTitle>
+          <CardTitle>Padel-logg</CardTitle>
           <CardDescription>En fråga i taget. Du kan hoppa över valfria steg.</CardDescription>
           <div className="h-2 w-full rounded-full bg-muted">
             <div

@@ -11,7 +11,7 @@ import { fetchLatestPadelSessions, fetchWeights, fetchWorkouts } from "@/lib/dat
 import type { WeightEntry, WorkoutWithPadel } from "@/lib/types";
 
 const quickLinks = [
-  { href: "/padel", title: "Logga padelpass", description: "Wizard med en fråga i taget" },
+  { href: "/padel", title: "Logga padelpass", description: "Stegvis loggning, en fråga i taget" },
   { href: "/weights", title: "Uppdatera vikt", description: "Söndagsfokus + snabbknapp idag" },
   { href: "/workouts", title: "Analysera passlogg", description: "Filter, datagrid och export" }
 ];

@@ -15,7 +15,7 @@ Modern tränings- och padelanalys som fullstack-webbapp.
 ## Funktioner
 
 - Viktlogg (söndagsdefault, "Logga vikt idag", veckodelta, trend)
-- Padel wizard (en fråga i taget, skippbara steg, sammanfattningskort)
+- Padel-logg (en fråga i taget, skippbara steg, sammanfattningskort)
 - Veckorutnät (ISO-vecka, mån–sön, vila, klick/tap för dagspass)
 - Passlogg (filter, sortering, sök, desktop-datagrid, mobile-cards)
 - Excel-export (`Passlogg` + `Veckorutnät`, datumintervall i filnamn)
