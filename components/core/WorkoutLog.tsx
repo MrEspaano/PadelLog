@@ -19,6 +19,13 @@ function intensityOptions() {
   return Array.from({ length: 9 }, (_, index) => (index + 2) / 2);
 }
 
+function formatUnforcedLevel(value: string | null | undefined) {
+  if (value === "low") return "Låg";
+  if (value === "medium") return "Mellan";
+  if (value === "high") return "Hög";
+  return "-";
+}
+
 function sortWorkouts(items: WorkoutWithPadel[], sort: string) {
   return [...items].sort((a, b) => {
     if (sort === "date-asc") {
@@ -237,6 +244,7 @@ export function WorkoutLog() {
                           <p>Partner: {workout.padel_session.partner || "-"}</p>
                           <p>Motstånd: {workout.padel_session.opponents || "-"}</p>
                           <p>Resultat: {workout.padel_session.results || "-"}</p>
+                          <p>Unforced: {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}</p>
                         </div>
                       ) : (
                         "-"
@@ -277,6 +285,12 @@ export function WorkoutLog() {
                 {workout.padel_session?.results ? (
                   <p className="mt-2 text-sm">
                     <span className="font-medium">Resultat:</span> {workout.padel_session.results}
+                  </p>
+                ) : null}
+                {workout.padel_session ? (
+                  <p className="mt-2 text-sm">
+                    <span className="font-medium">Mängd unforced:</span>{" "}
+                    {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}
                   </p>
                 ) : null}
                 {workout.note ? <p className="mt-2 text-sm">{workout.note}</p> : null}

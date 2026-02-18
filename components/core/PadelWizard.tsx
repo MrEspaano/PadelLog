@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createWorkoutWithOptionalPadel } from "@/lib/data/queries";
+import type { UnforcedErrorsLevel } from "@/lib/types";
 import { toISODate } from "@/lib/utils/date";
 
 interface WizardState {
@@ -24,6 +25,7 @@ interface WizardState {
   partner: string;
   opponents: string;
   results: string;
+  unforcedErrorsLevel: UnforcedErrorsLevel | null;
   feeling: number | null;
   note: string;
   tags: string;
@@ -37,6 +39,7 @@ const initialState: WizardState = {
   partner: "",
   opponents: "",
   results: "",
+  unforcedErrorsLevel: null,
   feeling: 3,
   note: "",
   tags: ""
@@ -49,12 +52,20 @@ const steps = [
   { key: "partner", title: "4. Partner", description: "Vem spelade du med?", optional: true },
   { key: "opponents", title: "5. Motstånd", description: "Vilka mötte ni?", optional: true },
   { key: "results", title: "6. Resultat", description: "Hur gick det?", optional: true },
-  { key: "feeling", title: "7. Känsla", description: "Hur kändes spelet?", optional: true },
-  { key: "note", title: "8. Kommentar", description: "Anteckning och taggar", optional: true }
+  { key: "unforced", title: "7. Mängd unforced", description: "Hur mycket unforced errors blev det?", optional: true },
+  { key: "feeling", title: "8. Känsla", description: "Hur kändes spelet?", optional: true },
+  { key: "note", title: "9. Kommentar", description: "Anteckning och taggar", optional: true }
 ] as const;
 
 function progressWidth(step: number) {
   return `${Math.round(((step + 1) / steps.length) * 100)}%`;
+}
+
+function unforcedLabel(level: UnforcedErrorsLevel | null) {
+  if (level === "low") return "Låg";
+  if (level === "medium") return "Mellan";
+  if (level === "high") return "Hög";
+  return "Ej angivet";
 }
 
 export function PadelWizard() {
@@ -105,6 +116,9 @@ export function PadelWizard() {
     if (currentStep.key === "feeling") {
       setState((prev) => ({ ...prev, feeling: null }));
     }
+    if (currentStep.key === "unforced") {
+      setState((prev) => ({ ...prev, unforcedErrorsLevel: null }));
+    }
     nextStep();
   }
 
@@ -127,6 +141,7 @@ export function PadelWizard() {
           partner: state.partner.trim() || null,
           opponents: state.opponents.trim() || null,
           results: state.results.trim() || null,
+          unforced_errors_level: state.unforcedErrorsLevel,
           tags: parsedTags,
           ball_share: null
         }
@@ -279,6 +294,27 @@ export function PadelWizard() {
                 </div>
               ) : null}
 
+              {currentStep.key === "unforced" ? (
+                <div className="space-y-2">
+                  <Label htmlFor="wizard-unforced">Mängd unforced</Label>
+                  <Select
+                    id="wizard-unforced"
+                    value={state.unforcedErrorsLevel ?? ""}
+                    onChange={(event) =>
+                      setState((prev) => ({
+                        ...prev,
+                        unforcedErrorsLevel: (event.target.value as UnforcedErrorsLevel) || null
+                      }))
+                    }
+                  >
+                    <option value="">Välj nivå</option>
+                    <option value="low">Låg</option>
+                    <option value="medium">Mellan</option>
+                    <option value="high">Hög</option>
+                  </Select>
+                </div>
+              ) : null}
+
               {currentStep.key === "feeling" ? (
                 <div className="space-y-2">
                   <Label htmlFor="wizard-feeling">Känsla: {state.feeling?.toFixed(1) ?? "-"}</Label>
@@ -402,6 +438,9 @@ export function PadelWizard() {
               </p>
               <p className="text-sm">
                 <span className="font-medium">Resultat:</span> {summary.results || "Ej angivet"}
+              </p>
+              <p className="text-sm">
+                <span className="font-medium">Mängd unforced:</span> {unforcedLabel(summary.unforcedErrorsLevel)}
               </p>
               <p className="text-sm">
                 <span className="font-medium">Kommentar:</span> {summary.note || "Ingen"}

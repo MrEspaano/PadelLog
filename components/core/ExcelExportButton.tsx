@@ -73,6 +73,7 @@ export function ExcelExportButton({ workouts, startDate, endDate }: ExcelExportB
       partner: workout.padel_session?.partner ?? "",
       opponents: workout.padel_session?.opponents ?? "",
       results: workout.padel_session?.results ?? "",
+      unforced_errors: workout.padel_session?.unforced_errors_level ?? "",
       tags: workout.padel_session?.tags?.join(", ") ?? "",
       kommentar: workout.note ?? ""
     }));

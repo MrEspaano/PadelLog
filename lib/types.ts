@@ -1,4 +1,5 @@
 export type WorkoutType = "padel" | "running" | "strength" | "other";
+export type UnforcedErrorsLevel = "low" | "medium" | "high";
 
 export interface WeightEntry {
   id: string;
@@ -28,6 +29,7 @@ export interface PadelSession {
   partner: string | null;
   opponents: string | null;
   results: string | null;
+  unforced_errors_level: UnforcedErrorsLevel | null;
   tags: string[] | null;
   ball_share: number | null;
   created_at: string;
@@ -59,6 +61,7 @@ export interface PadelSessionInsert {
   partner?: string | null;
   opponents?: string | null;
   results?: string | null;
+  unforced_errors_level?: UnforcedErrorsLevel | null;
   tags?: string[] | null;
   ball_share?: number | null;
 }

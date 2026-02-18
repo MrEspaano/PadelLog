@@ -50,6 +50,10 @@ create table if not exists padel_sessions (
   partner text,
   opponents text,
   results text,
+  unforced_errors_level text check (
+    unforced_errors_level is null
+    or unforced_errors_level in ('low', 'medium', 'high')
+  ),
   tags text[] not null default '{}',
   ball_share numeric(4,3) check (ball_share is null or (ball_share >= 0 and ball_share <= 1)),
   created_at timestamptz not null default now()

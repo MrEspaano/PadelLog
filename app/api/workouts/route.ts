@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import type { UnforcedErrorsLevel } from "@/lib/types";
 
 function parseNumber(value: unknown) {
   if (value === null || value === undefined || value === "") {
@@ -10,6 +11,13 @@ function parseNumber(value: unknown) {
 
   const numeric = Number(value);
   return Number.isNaN(numeric) ? null : numeric;
+}
+
+function parseUnforcedErrorsLevel(value: unknown): UnforcedErrorsLevel | null {
+  if (value !== "low" && value !== "medium" && value !== "high") {
+    return null;
+  }
+  return value;
 }
 
 export async function GET(request: Request) {
@@ -94,17 +102,37 @@ export async function POST(request: Request) {
     }
 
     const padelRows = await t`
-      insert into padel_sessions (workout_id, session_format, partner, opponents, results, tags, ball_share)
+      insert into padel_sessions (
+        workout_id,
+        session_format,
+        partner,
+        opponents,
+        results,
+        unforced_errors_level,
+        tags,
+        ball_share
+      )
       values (
         ${createdWorkout.id},
         ${padel?.session_format ? String(padel.session_format) : null},
         ${padel?.partner ? String(padel.partner) : null},
         ${padel?.opponents ? String(padel.opponents) : null},
         ${padel?.results ? String(padel.results) : null},
+        ${parseUnforcedErrorsLevel(padel?.unforced_errors_level)},
         ${Array.isArray(padel?.tags) ? padel.tags : []},
         ${parseNumber(padel?.ball_share)}
       )
-      returning id, workout_id, session_format, partner, opponents, results, tags, ball_share, created_at
+      returning
+        id,
+        workout_id,
+        session_format,
+        partner,
+        opponents,
+        results,
+        unforced_errors_level,
+        tags,
+        ball_share,
+        created_at
     `;
 
     return {
