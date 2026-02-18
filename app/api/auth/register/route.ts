@@ -26,8 +26,26 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (typeof error === "object" && error && "code" in error && error.code === "23505") {
-      return NextResponse.json({ error: "E-postadressen används redan." }, { status: 409 });
+    if (typeof error === "object" && error && "code" in error) {
+      const code = String(error.code);
+
+      if (code === "23505") {
+        return NextResponse.json({ error: "E-postadressen används redan." }, { status: 409 });
+      }
+
+      if (code === "42P01") {
+        return NextResponse.json(
+          { error: "Databastabeller saknas. Kör SQL-scriptet i neon/schema.sql i Neon." },
+          { status: 500 }
+        );
+      }
+
+      if (code === "28P01" || code === "3D000") {
+        return NextResponse.json(
+          { error: "Databasanslutning felkonfigurerad. Kontrollera DATABASE_URL i Vercel." },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({ error: "Kunde inte skapa konto." }, { status: 500 });
