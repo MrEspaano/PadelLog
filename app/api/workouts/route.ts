@@ -68,7 +68,9 @@ export async function POST(request: Request) {
   }
 
   const created = await sql.begin(async (tx) => {
-    const workoutRows = await tx`
+    const t = tx as unknown as typeof sql;
+
+    const workoutRows = await t`
       insert into workouts (user_id, date, type, duration_min, intensity_1_5, feeling_1_5, note)
       values (
         ${session.user.id},
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
       };
     }
 
-    const padelRows = await tx`
+    const padelRows = await t`
       insert into padel_sessions (workout_id, session_format, partner, opponents, results, tags, ball_share)
       values (
         ${createdWorkout.id},
