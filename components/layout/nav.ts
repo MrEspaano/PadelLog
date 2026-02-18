@@ -9,7 +9,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/padel", label: "Padel-logg", icon: Activity },
+  { href: "/padel", label: "Logga pass", icon: Activity },
   { href: "/weights", label: "Viktlogg", icon: Scale },
   { href: "/workouts", label: "Passlogg", icon: Grid2x2 },
   { href: "/coach", label: "Kritisk Coach", icon: Dumbbell }
