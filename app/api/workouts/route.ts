@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Datum, typ och duration krävs." }, { status: 400 });
   }
 
-  const created = await sql.begin(async (tx) => {
+  const created = await sql.begin(async (tx: unknown) => {
     const t = tx as unknown as typeof sql;
 
     const workoutRows = await t`

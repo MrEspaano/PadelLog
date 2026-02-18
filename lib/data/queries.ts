@@ -72,3 +72,9 @@ export async function createWorkoutWithOptionalPadel(
     padel: created.padel_session
   };
 }
+
+export async function deleteWorkout(workoutId: string) {
+  return requestJson<{ ok: boolean; id: string }>(`/api/workouts/${encodeURIComponent(workoutId)}`, {
+    method: "DELETE"
+  });
+}

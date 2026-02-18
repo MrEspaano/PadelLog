@@ -1,16 +1,17 @@
 "use client";
 
 import { subDays } from "date-fns";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ExcelExportButton } from "@/components/core/ExcelExportButton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchWorkouts } from "@/lib/data/queries";
+import { deleteWorkout, fetchWorkouts } from "@/lib/data/queries";
 import type { WorkoutWithPadel } from "@/lib/types";
 import { toISODate } from "@/lib/utils/date";
 
@@ -37,6 +38,7 @@ export function WorkoutLog() {
   const [workouts, setWorkouts] = useState<WorkoutWithPadel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
@@ -117,6 +119,25 @@ export function WorkoutLog() {
     [exportEnd, exportStart, filtered]
   );
 
+  async function handleDeleteWorkout(workoutId: string) {
+    const confirmed = window.confirm("Ta bort detta pass permanent?");
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(workoutId);
+    setError(null);
+
+    try {
+      await deleteWorkout(workoutId);
+      setWorkouts((current) => current.filter((workout) => workout.id !== workoutId));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Kunde inte ta bort passet.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -190,12 +211,13 @@ export function WorkoutLog() {
                 <TableHead>Känsla</TableHead>
                 <TableHead>Padelinfo</TableHead>
                 <TableHead>Kommentar</TableHead>
+                <TableHead className="text-right">Åtgärd</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Inga pass matchar filtren.
                   </TableCell>
                 </TableRow>
@@ -221,6 +243,17 @@ export function WorkoutLog() {
                       )}
                     </TableCell>
                     <TableCell>{workout.note || "-"}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => void handleDeleteWorkout(workout.id)}
+                        disabled={deletingId === workout.id}
+                      >
+                        <Trash2 className="mr-1 h-3.5 w-3.5" />
+                        {deletingId === workout.id ? "Tar bort..." : "Ta bort"}
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -247,6 +280,17 @@ export function WorkoutLog() {
                   </p>
                 ) : null}
                 {workout.note ? <p className="mt-2 text-sm">{workout.note}</p> : null}
+                <div className="mt-3">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => void handleDeleteWorkout(workout.id)}
+                    disabled={deletingId === workout.id}
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    {deletingId === workout.id ? "Tar bort..." : "Ta bort pass"}
+                  </Button>
+                </div>
               </div>
             ))
           )}
