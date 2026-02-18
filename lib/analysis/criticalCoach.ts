@@ -30,6 +30,19 @@ function estimateWinRate(results: Array<string | null>) {
   return wins / normalized.length;
 }
 
+function toNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
 export function analyzeCriticalCoach(sessions: WorkoutWithPadel[]): CoachInsight | null {
   if (sessions.length < 3) {
     return null;
@@ -38,9 +51,8 @@ export function analyzeCriticalCoach(sessions: WorkoutWithPadel[]): CoachInsight
   const scoped = sessions.slice(0, 10);
   const windowSize = Math.min(10, Math.max(3, scoped.length));
 
-  const avgIntensity =
-    scoped.reduce((sum, session) => sum + (session.intensity_1_5 ?? 0), 0) / windowSize;
-  const avgFeeling = scoped.reduce((sum, session) => sum + (session.feeling_1_5 ?? 0), 0) / windowSize;
+  const avgIntensity = scoped.reduce((sum, session) => sum + toNumber(session.intensity_1_5), 0) / windowSize;
+  const avgFeeling = scoped.reduce((sum, session) => sum + toNumber(session.feeling_1_5), 0) / windowSize;
   const avgDuration = scoped.reduce((sum, session) => sum + session.duration_min, 0) / windowSize;
 
   const qualityRatio = avgIntensity === 0 ? 0 : avgFeeling / avgIntensity;
