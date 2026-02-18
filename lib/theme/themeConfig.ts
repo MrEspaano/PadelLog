@@ -1,5 +1,5 @@
 export const themeConfig = {
-  name: "PadelLog Court Blue",
+  name: "PadelFocus Court Blue",
   colors: {
     primary: "#0E4D92",
     primarySoft: "#2F78C6",

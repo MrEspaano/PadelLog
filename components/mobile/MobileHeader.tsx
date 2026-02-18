@@ -14,7 +14,7 @@ export function MobileHeader({ title }: MobileHeaderProps) {
             <PadelIcon mode="racket" className="h-3.5 w-3.5" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">PadelLog</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">PadelFocus</p>
             <h2 className="font-display text-lg font-semibold">{title}</h2>
           </div>
         </div>

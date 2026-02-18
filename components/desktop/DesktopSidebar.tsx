@@ -18,7 +18,7 @@ export function DesktopSidebar() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-black/8" />
         <div className="relative z-10 flex items-center gap-2">
           <PadelIcon mode="logo" className="h-6 w-6 text-white" />
-          <p className="text-xs font-semibold uppercase tracking-[0.2em]">PadelLog</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]">PadelFocus</p>
         </div>
         <h1 className="relative z-10 mt-2 text-xl font-bold">Träning & Analys</h1>
       </div>

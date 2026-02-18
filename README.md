@@ -1,4 +1,4 @@
-# PadelLog (Next.js + Neon + Vercel)
+# PadelFocus (Next.js + Neon + Vercel)
 
 Modern tränings- och padelanalys som fullstack-webbapp.
 

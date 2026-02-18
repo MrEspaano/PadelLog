@@ -12,7 +12,7 @@ interface AppLayoutShellProps extends PropsWithChildren {
 
 export function AppLayoutShell({ children, userEmail }: AppLayoutShellProps) {
   const pathname = usePathname();
-  const title = PAGE_TITLES[pathname] ?? "PadelLog";
+  const title = PAGE_TITLES[pathname] ?? "PadelFocus";
 
   return (
     <LayoutProvider title={title} userEmail={userEmail}>

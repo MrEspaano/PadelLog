@@ -80,7 +80,7 @@ export function ExcelExportButton({ workouts, startDate, endDate }: ExcelExportB
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(workoutRows), "Passlogg");
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(weekRows), "Veckorutnät");
 
-    const fileName = `padellog_${filenameDateRange(startDate, endDate)}.xlsx`;
+    const fileName = `padelfocus_${filenameDateRange(startDate, endDate)}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   }
 

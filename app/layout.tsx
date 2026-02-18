@@ -17,7 +17,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "PadelLog",
+  title: "PadelFocus",
   description: "Modern tränings- och padelanalys för desktop och mobile."
 };
 
