@@ -68,9 +68,10 @@ export function DashboardOverview() {
 
   return (
     <div className="space-y-4">
-      <section className="court-lines relative overflow-hidden rounded-2xl border border-padel-line/70 bg-gradient-to-r from-[#0E4D92] to-[#2F78C6] p-5 text-white shadow-stadium">
+      <section className="relative overflow-hidden rounded-2xl border border-padel-line/70 bg-gradient-to-r from-[#0E4D92] to-[#2F78C6] p-5 text-white shadow-stadium">
+        <div className="pointer-events-none absolute inset-0 bg-court-lines opacity-20" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-black/10" />
-        <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/10 to-transparent md:block" />
+        <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/5 to-transparent md:block" />
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="mb-2 flex items-center gap-2">

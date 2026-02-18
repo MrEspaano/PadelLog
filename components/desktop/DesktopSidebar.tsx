@@ -14,6 +14,7 @@ export function DesktopSidebar() {
   return (
     <aside className="mat-surface sticky top-0 hidden h-screen w-72 shrink-0 border-r border-padel-line/60 bg-white/85 p-5 lg:flex lg:flex-col">
       <div className="relative overflow-hidden rounded-2xl border border-padel-line/60 bg-gradient-to-br from-[#0E4D92] to-[#2F78C6] p-4 text-white shadow-stadium">
+        <div className="pointer-events-none absolute inset-0 bg-court-lines opacity-20" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-black/8" />
         <div className="relative z-10 flex items-center gap-2">
           <PadelIcon mode="logo" className="h-6 w-6 text-white" />
