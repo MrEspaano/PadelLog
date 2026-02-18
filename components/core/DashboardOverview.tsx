@@ -68,7 +68,8 @@ export function DashboardOverview() {
 
   return (
     <div className="space-y-4">
-      <section className="court-lines mat-surface relative overflow-hidden rounded-2xl border border-padel-line/70 bg-gradient-to-r from-padel-blue to-padel-blue-soft p-5 text-white shadow-stadium">
+      <section className="court-lines relative overflow-hidden rounded-2xl border border-padel-line/70 bg-gradient-to-r from-[#0E4D92] to-[#2F78C6] p-5 text-white shadow-stadium">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-black/10" />
         <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/10 to-transparent md:block" />
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -81,7 +82,7 @@ export function DashboardOverview() {
           </div>
           <Link
             href="/padel"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/45 bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/25"
           >
             Logga nytt pass
             <ArrowRight className="h-4 w-4" />
