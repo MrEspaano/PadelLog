@@ -4,6 +4,7 @@ import { sv } from "date-fns/locale";
 import { BallAccentBadge } from "@/components/padel/BallAccentBadge";
 import { PadelIcon } from "@/components/padel/PadelIcon";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils/cn";
 
 interface DesktopTopbarProps {
   title: string;
@@ -11,15 +12,22 @@ interface DesktopTopbarProps {
 }
 
 export function DesktopTopbar({ title, userEmail }: DesktopTopbarProps) {
+  const isOverview = title === "Översikt";
+
   return (
-    <header className="mat-surface mb-6 flex items-center justify-between rounded-2xl border border-padel-line/70 bg-white/85 p-4">
-      <div className="flex items-start gap-3">
+    <header
+      className={cn(
+        "mat-surface mb-6 flex items-center justify-between rounded-2xl border border-padel-line/70 bg-white/85 px-4",
+        isOverview ? "py-3" : "py-4"
+      )}
+    >
+      <div className={cn("flex items-start", isOverview ? "gap-2" : "gap-3")}>
         <div className="mt-1 rounded-full bg-padel-court p-2 text-padel-blue">
           <PadelIcon mode="racket" className="h-4 w-4" />
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE d MMMM", { locale: sv })}</p>
-          <h2 className="font-display text-2xl font-semibold">{title}</h2>
+          {!isOverview ? <h2 className="font-display text-2xl font-semibold">{title}</h2> : null}
         </div>
       </div>
 
