@@ -35,6 +35,7 @@ export function CriticalCoachPanel() {
 
   const scoped = sessions.slice(0, Math.min(windowSize, sessions.length));
   const insight = useMemo(() => analyzeCriticalCoach(scoped), [scoped]);
+  const hasValidInsight = Boolean(insight && !insight.kpiValue.includes("NaN"));
 
   return (
     <Card>
@@ -59,13 +60,13 @@ export function CriticalCoachPanel() {
         {loading ? <p className="text-sm text-muted-foreground">Laddar coachdata...</p> : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-        {!loading && !error && !insight ? (
+        {!loading && !error && !hasValidInsight ? (
           <p className="rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
             Minst 3 padelpass krävs för kritisk analys.
           </p>
         ) : null}
 
-        {insight ? (
+        {hasValidInsight && insight ? (
           <div className="space-y-4">
             <div className="rounded-lg border bg-gradient-to-r from-accent-teal/10 to-accent-purple/10 p-4">
               <p className="text-sm text-muted-foreground">{insight.kpiTitle}</p>

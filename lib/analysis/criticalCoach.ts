@@ -51,11 +51,16 @@ export function analyzeCriticalCoach(sessions: WorkoutWithPadel[]): CoachInsight
   const scoped = sessions.slice(0, 10);
   const windowSize = Math.min(10, Math.max(3, scoped.length));
 
-  const avgIntensity = scoped.reduce((sum, session) => sum + toNumber(session.intensity_1_5), 0) / windowSize;
-  const avgFeeling = scoped.reduce((sum, session) => sum + toNumber(session.feeling_1_5), 0) / windowSize;
-  const avgDuration = scoped.reduce((sum, session) => sum + session.duration_min, 0) / windowSize;
+  const rawAvgIntensity = scoped.reduce((sum, session) => sum + toNumber(session.intensity_1_5), 0) / windowSize;
+  const rawAvgFeeling = scoped.reduce((sum, session) => sum + toNumber(session.feeling_1_5), 0) / windowSize;
+  const rawAvgDuration = scoped.reduce((sum, session) => sum + toNumber(session.duration_min), 0) / windowSize;
 
-  const qualityRatio = avgIntensity === 0 ? 0 : avgFeeling / avgIntensity;
+  const avgIntensity = Number.isFinite(rawAvgIntensity) ? rawAvgIntensity : 0;
+  const avgFeeling = Number.isFinite(rawAvgFeeling) ? rawAvgFeeling : 0;
+  const avgDuration = Number.isFinite(rawAvgDuration) ? rawAvgDuration : 0;
+
+  const rawQualityRatio = avgIntensity === 0 ? 0 : avgFeeling / avgIntensity;
+  const qualityRatio = Number.isFinite(rawQualityRatio) ? rawQualityRatio : 0;
   const winRate = estimateWinRate(scoped.map((session) => session.padel_session?.results ?? null));
 
   const kpiTitle = "KPI: Kvalitetskvot (känsla/intensitet)";

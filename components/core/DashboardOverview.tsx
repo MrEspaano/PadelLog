@@ -59,6 +59,9 @@ export function DashboardOverview() {
   }, [workouts]);
 
   const coachInsight = useMemo(() => analyzeCriticalCoach(padel.slice(0, 6)), [padel]);
+  const coachKpi = coachInsight?.kpiValue && !coachInsight.kpiValue.includes("NaN")
+    ? coachInsight.kpiValue
+    : null;
 
   return (
     <div className="space-y-4">
@@ -80,7 +83,7 @@ export function DashboardOverview() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Coach-KPI</CardDescription>
-            <CardTitle>{coachInsight ? coachInsight.kpiValue : "Behöver fler pass"}</CardTitle>
+            <CardTitle>{coachKpi ?? "Behöver fler pass"}</CardTitle>
           </CardHeader>
         </Card>
       </div>
