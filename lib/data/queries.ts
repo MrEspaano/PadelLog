@@ -89,6 +89,20 @@ export async function deleteWorkout(workoutId: string) {
   });
 }
 
+export async function updateWorkoutWithOptionalPadel(
+  workoutId: string,
+  workout: Omit<WorkoutInsert, "user_id">,
+  padel?: PadelSessionInsert
+) {
+  return requestJson<WorkoutWithPadel>(`/api/workouts/${encodeURIComponent(workoutId)}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      workout,
+      padel: padel ?? null
+    })
+  });
+}
+
 export async function addPainLog(workoutId: string, painLog: PainLogInsert) {
   return requestJson<PainLog>(`/api/workouts/${encodeURIComponent(workoutId)}/pain-logs`, {
     method: "POST",

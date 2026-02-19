@@ -1,7 +1,7 @@
 "use client";
 
 import { subDays } from "date-fns";
-import { Search, Trash2 } from "lucide-react";
+import { Pencil, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ExcelExportButton } from "@/components/core/ExcelExportButton";
@@ -11,9 +11,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { deleteWorkout, fetchWorkouts } from "@/lib/data/queries";
-import type { WorkoutWithPadel } from "@/lib/types";
+import { Textarea } from "@/components/ui/textarea";
+import { deleteWorkout, fetchWorkouts, updateWorkoutWithOptionalPadel } from "@/lib/data/queries";
+import type { MatchStatus, UnforcedErrorsLevel, WorkoutType, WorkoutWithPadel } from "@/lib/types";
 import { toISODate } from "@/lib/utils/date";
+
+type EditForm = {
+  id: string;
+  date: string;
+  type: WorkoutType;
+  duration_min: string;
+  intensity_1_5: string;
+  feeling_1_5: string;
+  note: string;
+  session_format: string;
+  partner: string;
+  opponents: string;
+  results: string;
+  match_status: MatchStatus | "";
+  unforced_errors_level: UnforcedErrorsLevel | "";
+};
 
 function intensityOptions() {
   return Array.from({ length: 9 }, (_, index) => (index + 2) / 2);
@@ -54,11 +71,31 @@ function sortWorkouts(items: WorkoutWithPadel[], sort: string) {
   });
 }
 
+function createEditForm(workout: WorkoutWithPadel): EditForm {
+  return {
+    id: workout.id,
+    date: workout.date,
+    type: workout.type,
+    duration_min: String(workout.duration_min),
+    intensity_1_5: workout.intensity_1_5 == null ? "" : String(workout.intensity_1_5),
+    feeling_1_5: workout.feeling_1_5 == null ? "" : String(workout.feeling_1_5),
+    note: workout.note ?? "",
+    session_format: workout.padel_session?.session_format ?? "",
+    partner: workout.padel_session?.partner ?? "",
+    opponents: workout.padel_session?.opponents ?? "",
+    results: workout.padel_session?.results ?? "",
+    match_status: workout.padel_session?.match_status ?? "",
+    unforced_errors_level: workout.padel_session?.unforced_errors_level ?? ""
+  };
+}
+
 export function WorkoutLog() {
   const [workouts, setWorkouts] = useState<WorkoutWithPadel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
 
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
@@ -139,6 +176,65 @@ export function WorkoutLog() {
     [exportEnd, exportStart, filtered]
   );
 
+  function updateEditField<K extends keyof EditForm>(key: K, value: EditForm[K]) {
+    setEditForm((current) => (current ? { ...current, [key]: value } : current));
+  }
+
+  function startEdit(workout: WorkoutWithPadel) {
+    setError(null);
+    setEditForm(createEditForm(workout));
+  }
+
+  function cancelEdit() {
+    setEditForm(null);
+  }
+
+  async function saveEdit() {
+    if (!editForm) {
+      return;
+    }
+
+    const duration = Number(editForm.duration_min);
+    if (!editForm.date || !Number.isFinite(duration) || duration <= 0) {
+      setError("Datum och giltig duration krävs.");
+      return;
+    }
+
+    setSavingId(editForm.id);
+    setError(null);
+
+    try {
+      const updated = await updateWorkoutWithOptionalPadel(
+        editForm.id,
+        {
+          date: editForm.date,
+          type: editForm.type,
+          duration_min: duration,
+          intensity_1_5: editForm.intensity_1_5 === "" ? null : Number(editForm.intensity_1_5),
+          feeling_1_5: editForm.feeling_1_5 === "" ? null : Number(editForm.feeling_1_5),
+          note: editForm.note || null
+        },
+        editForm.type === "padel"
+          ? {
+              session_format: editForm.session_format || null,
+              partner: editForm.partner || null,
+              opponents: editForm.opponents || null,
+              results: editForm.results || null,
+              match_status: editForm.match_status || null,
+              unforced_errors_level: editForm.unforced_errors_level || null
+            }
+          : undefined
+      );
+
+      setWorkouts((current) => current.map((workout) => (workout.id === updated.id ? updated : workout)));
+      setEditForm(null);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Kunde inte spara ändringar.");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   async function handleDeleteWorkout(workoutId: string) {
     const confirmed = window.confirm("Ta bort detta pass permanent?");
     if (!confirmed) {
@@ -151,6 +247,9 @@ export function WorkoutLog() {
     try {
       await deleteWorkout(workoutId);
       setWorkouts((current) => current.filter((workout) => workout.id !== workoutId));
+      if (editForm?.id === workoutId) {
+        setEditForm(null);
+      }
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Kunde inte ta bort passet.");
     } finally {
@@ -158,11 +257,13 @@ export function WorkoutLog() {
     }
   }
 
+  const isEditing = (workoutId: string) => editForm?.id === workoutId;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Passlogg</CardTitle>
-        <CardDescription>Filter, sortering, sök och Excel-export.</CardDescription>
+        <CardDescription>Filter, sortering, sök, redigering och Excel-export.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
@@ -242,55 +343,140 @@ export function WorkoutLog() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((workout) => (
-                  <TableRow key={workout.id}>
-                    <TableCell>{workout.date}</TableCell>
-                    <TableCell>
-                      <Badge>{workout.type}</Badge>
-                    </TableCell>
-                    <TableCell>{workout.duration_min} min</TableCell>
-                    <TableCell>{workout.intensity_1_5 ?? "-"}</TableCell>
-                    <TableCell>{workout.feeling_1_5 ?? "-"}</TableCell>
-                    <TableCell>
-                      {workout.padel_session ? (
-                        <div className="space-y-1 text-xs">
-                          <p>Partner: {workout.padel_session.partner || "-"}</p>
-                          <p>Motstånd: {workout.padel_session.opponents || "-"}</p>
-                          <p>Resultat: {workout.padel_session.results || "-"}</p>
-                          <p>Status: {formatMatchStatus(workout.padel_session.match_status)}</p>
-                          <p>Unforced: {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}</p>
-                          {workout.padel_session.coach_summary ? (
-                            <p className="text-primary">
-                              Coach: {truncateCoachSummary(workout.padel_session.coach_summary)}
-                            </p>
-                          ) : null}
-                          {workout.pain_logs.length > 0 ? (
-                            <p>
-                              Smärta:{" "}
-                              {workout.pain_logs
-                                .map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`)
-                                .join(", ")}
-                            </p>
-                          ) : null}
+                filtered.map((workout) => {
+                  if (isEditing(workout.id) && editForm) {
+                    return (
+                      <TableRow key={workout.id}>
+                        <TableCell colSpan={8}>
+                          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                            <Input type="date" value={editForm.date} onChange={(event) => updateEditField("date", event.target.value)} />
+                            <Select value={editForm.type} onChange={(event) => updateEditField("type", event.target.value as WorkoutType)}>
+                              <option value="padel">Padel</option>
+                              <option value="running">Löpning</option>
+                              <option value="strength">Styrka</option>
+                              <option value="other">Övrigt</option>
+                            </Select>
+                            <Input
+                              type="number"
+                              min={1}
+                              step={1}
+                              placeholder="Duration (min)"
+                              value={editForm.duration_min}
+                              onChange={(event) => updateEditField("duration_min", event.target.value)}
+                            />
+                            <Input
+                              type="number"
+                              min={1}
+                              max={5}
+                              step={0.5}
+                              placeholder="Intensitet"
+                              value={editForm.intensity_1_5}
+                              onChange={(event) => updateEditField("intensity_1_5", event.target.value)}
+                            />
+                            <Input
+                              type="number"
+                              min={1}
+                              max={5}
+                              step={0.5}
+                              placeholder="Känsla"
+                              value={editForm.feeling_1_5}
+                              onChange={(event) => updateEditField("feeling_1_5", event.target.value)}
+                            />
+                            {editForm.type === "padel" ? (
+                              <>
+                                <Input placeholder="Format" value={editForm.session_format} onChange={(event) => updateEditField("session_format", event.target.value)} />
+                                <Input placeholder="Partner" value={editForm.partner} onChange={(event) => updateEditField("partner", event.target.value)} />
+                                <Input placeholder="Motstånd" value={editForm.opponents} onChange={(event) => updateEditField("opponents", event.target.value)} />
+                                <Input placeholder="Resultat" value={editForm.results} onChange={(event) => updateEditField("results", event.target.value)} />
+                                <Select value={editForm.match_status} onChange={(event) => updateEditField("match_status", event.target.value as MatchStatus | "")}>
+                                  <option value="">Status</option>
+                                  <option value="win">Vinst</option>
+                                  <option value="loss">Förlust</option>
+                                  <option value="unclear">Oklart</option>
+                                  <option value="aborted">Avbruten</option>
+                                </Select>
+                                <Select
+                                  value={editForm.unforced_errors_level}
+                                  onChange={(event) => updateEditField("unforced_errors_level", event.target.value as UnforcedErrorsLevel | "")}
+                                >
+                                  <option value="">Unforced</option>
+                                  <option value="low">Låg</option>
+                                  <option value="medium">Mellan</option>
+                                  <option value="high">Hög</option>
+                                </Select>
+                              </>
+                            ) : null}
+                            <div className="xl:col-span-4">
+                              <Textarea
+                                placeholder="Kommentar"
+                                className="min-h-[70px]"
+                                value={editForm.note}
+                                onChange={(event) => updateEditField("note", event.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-3 flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={cancelEdit} disabled={savingId === workout.id}>
+                              Avbryt
+                            </Button>
+                            <Button size="sm" onClick={() => void saveEdit()} disabled={savingId === workout.id}>
+                              {savingId === workout.id ? "Sparar..." : "Spara"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+
+                  return (
+                    <TableRow key={workout.id}>
+                      <TableCell>{workout.date}</TableCell>
+                      <TableCell>
+                        <Badge>{workout.type}</Badge>
+                      </TableCell>
+                      <TableCell>{workout.duration_min} min</TableCell>
+                      <TableCell>{workout.intensity_1_5 ?? "-"}</TableCell>
+                      <TableCell>{workout.feeling_1_5 ?? "-"}</TableCell>
+                      <TableCell>
+                        {workout.padel_session ? (
+                          <div className="space-y-1 text-xs">
+                            <p>Partner: {workout.padel_session.partner || "-"}</p>
+                            <p>Motstånd: {workout.padel_session.opponents || "-"}</p>
+                            <p>Resultat: {workout.padel_session.results || "-"}</p>
+                            <p>Status: {formatMatchStatus(workout.padel_session.match_status)}</p>
+                            <p>Unforced: {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}</p>
+                            {workout.padel_session.coach_summary ? (
+                              <p className="text-primary">Coach: {truncateCoachSummary(workout.padel_session.coach_summary)}</p>
+                            ) : null}
+                            {workout.pain_logs.length > 0 ? (
+                              <p>Smärta: {workout.pain_logs.map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`).join(", ")}</p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell>{workout.note || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => startEdit(workout)} disabled={deletingId === workout.id}>
+                            <Pencil className="mr-1 h-3.5 w-3.5" />
+                            Redigera
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => void handleDeleteWorkout(workout.id)}
+                            disabled={deletingId === workout.id}
+                          >
+                            <Trash2 className="mr-1 h-3.5 w-3.5" />
+                            {deletingId === workout.id ? "Tar bort..." : "Ta bort"}
+                          </Button>
                         </div>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell>{workout.note || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => void handleDeleteWorkout(workout.id)}
-                        disabled={deletingId === workout.id}
-                      >
-                        <Trash2 className="mr-1 h-3.5 w-3.5" />
-                        {deletingId === workout.id ? "Tar bort..." : "Ta bort"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -321,8 +507,7 @@ export function WorkoutLog() {
                 ) : null}
                 {workout.padel_session ? (
                   <p className="mt-2 text-sm">
-                    <span className="font-medium">Mängd unforced:</span>{" "}
-                    {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}
+                    <span className="font-medium">Mängd unforced:</span> {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}
                   </p>
                 ) : null}
                 {workout.padel_session?.coach_summary ? (
@@ -337,17 +522,98 @@ export function WorkoutLog() {
                   </p>
                 ) : null}
                 {workout.note ? <p className="mt-2 text-sm">{workout.note}</p> : null}
-                <div className="mt-3">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => void handleDeleteWorkout(workout.id)}
-                    disabled={deletingId === workout.id}
-                  >
-                    <Trash2 className="mr-1 h-3.5 w-3.5" />
-                    {deletingId === workout.id ? "Tar bort..." : "Ta bort pass"}
-                  </Button>
-                </div>
+
+                {isEditing(workout.id) && editForm ? (
+                  <div className="mt-3 space-y-2 rounded-lg border p-3">
+                    <Input type="date" value={editForm.date} onChange={(event) => updateEditField("date", event.target.value)} />
+                    <Select value={editForm.type} onChange={(event) => updateEditField("type", event.target.value as WorkoutType)}>
+                      <option value="padel">Padel</option>
+                      <option value="running">Löpning</option>
+                      <option value="strength">Styrka</option>
+                      <option value="other">Övrigt</option>
+                    </Select>
+                    <Input
+                      type="number"
+                      min={1}
+                      step={1}
+                      placeholder="Duration (min)"
+                      value={editForm.duration_min}
+                      onChange={(event) => updateEditField("duration_min", event.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={5}
+                      step={0.5}
+                      placeholder="Intensitet"
+                      value={editForm.intensity_1_5}
+                      onChange={(event) => updateEditField("intensity_1_5", event.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={5}
+                      step={0.5}
+                      placeholder="Känsla"
+                      value={editForm.feeling_1_5}
+                      onChange={(event) => updateEditField("feeling_1_5", event.target.value)}
+                    />
+                    {editForm.type === "padel" ? (
+                      <>
+                        <Input placeholder="Format" value={editForm.session_format} onChange={(event) => updateEditField("session_format", event.target.value)} />
+                        <Input placeholder="Partner" value={editForm.partner} onChange={(event) => updateEditField("partner", event.target.value)} />
+                        <Input placeholder="Motstånd" value={editForm.opponents} onChange={(event) => updateEditField("opponents", event.target.value)} />
+                        <Input placeholder="Resultat" value={editForm.results} onChange={(event) => updateEditField("results", event.target.value)} />
+                        <Select value={editForm.match_status} onChange={(event) => updateEditField("match_status", event.target.value as MatchStatus | "")}>
+                          <option value="">Status</option>
+                          <option value="win">Vinst</option>
+                          <option value="loss">Förlust</option>
+                          <option value="unclear">Oklart</option>
+                          <option value="aborted">Avbruten</option>
+                        </Select>
+                        <Select
+                          value={editForm.unforced_errors_level}
+                          onChange={(event) => updateEditField("unforced_errors_level", event.target.value as UnforcedErrorsLevel | "")}
+                        >
+                          <option value="">Unforced</option>
+                          <option value="low">Låg</option>
+                          <option value="medium">Mellan</option>
+                          <option value="high">Hög</option>
+                        </Select>
+                      </>
+                    ) : null}
+                    <Textarea
+                      placeholder="Kommentar"
+                      className="min-h-[70px]"
+                      value={editForm.note}
+                      onChange={(event) => updateEditField("note", event.target.value)}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={cancelEdit} disabled={savingId === workout.id}>
+                        Avbryt
+                      </Button>
+                      <Button size="sm" onClick={() => void saveEdit()} disabled={savingId === workout.id}>
+                        {savingId === workout.id ? "Sparar..." : "Spara"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => startEdit(workout)} disabled={deletingId === workout.id}>
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Redigera
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => void handleDeleteWorkout(workout.id)}
+                      disabled={deletingId === workout.id}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      {deletingId === workout.id ? "Tar bort..." : "Ta bort pass"}
+                    </Button>
+                  </div>
+                )}
               </div>
             ))
           )}
