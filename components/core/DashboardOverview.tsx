@@ -21,6 +21,11 @@ const quickLinks = [
   { href: "/workouts", title: "Analysera passlogg", description: "Filter, datagrid och export", icon: Sparkles }
 ];
 
+function toSafeNumber(value: unknown) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 export function DashboardOverview() {
   const [weights, setWeights] = useState<WeightEntry[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutWithPadel[]>([]);
@@ -53,7 +58,7 @@ export function DashboardOverview() {
     void load();
   }, []);
 
-  const lastWeight = weights[0]?.weight_kg ?? null;
+  const lastWeight = toSafeNumber(weights[0]?.weight_kg);
 
   const lastSevenDays = useMemo(() => {
     const today = new Date();
