@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import type { UnforcedErrorsLevel } from "@/lib/types";
+import type { MatchStatus, PainLogInsert, UnforcedErrorsLevel } from "@/lib/types";
 
 function parseNumber(value: unknown) {
   if (value === null || value === undefined || value === "") {
@@ -18,6 +18,28 @@ function parseUnforcedErrorsLevel(value: unknown): UnforcedErrorsLevel | null {
     return null;
   }
   return value;
+}
+
+function parseMatchStatus(value: unknown): MatchStatus | null {
+  if (value !== "win" && value !== "loss" && value !== "unclear" && value !== "aborted") {
+    return null;
+  }
+  return value;
+}
+
+function normalizePainLogs(value: unknown): PainLogInsert[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((log) => ({
+      pain_area: typeof log?.pain_area === "string" ? log.pain_area : "annan",
+      pain_intensity_0_10: Number(log?.pain_intensity_0_10 ?? 0),
+      pain_type: typeof log?.pain_type === "string" ? log.pain_type : null,
+      pain_note: typeof log?.pain_note === "string" ? log.pain_note : null
+    }))
+    .filter((log) => Number.isFinite(log.pain_intensity_0_10) && log.pain_intensity_0_10 >= 0 && log.pain_intensity_0_10 <= 10);
 }
 
 export async function GET(request: Request) {
@@ -43,7 +65,12 @@ export async function GET(request: Request) {
       w.feeling_1_5,
       w.note,
       w.created_at,
-      row_to_json(ps) as padel_session
+      row_to_json(ps) as padel_session,
+      coalesce((
+        select json_agg(pl order by pl.created_at desc)
+        from pain_logs pl
+        where pl.workout_id = w.id
+      ), '[]'::json) as pain_logs
     from workouts w
     left join padel_sessions ps on ps.workout_id = w.id
     where w.user_id = ${session.user.id}
@@ -66,6 +93,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const workout = body.workout ?? {};
   const padel = body.padel ?? null;
+  const painLogs = normalizePainLogs(body.pain_logs);
 
   const date = String(workout.date ?? "");
   const type = String(workout.type ?? "");
@@ -95,9 +123,40 @@ export async function POST(request: Request) {
     const createdWorkout = workoutRows[0];
 
     if (type !== "padel") {
+      if (painLogs.length > 0) {
+        for (const painLog of painLogs.slice(0, 2)) {
+          await t`
+            insert into pain_logs (
+              user_id,
+              workout_id,
+              pain_area,
+              pain_intensity_0_10,
+              pain_type,
+              pain_note
+            )
+            values (
+              ${session.user.id},
+              ${createdWorkout.id},
+              ${painLog.pain_area},
+              ${painLog.pain_intensity_0_10},
+              ${painLog.pain_type},
+              ${painLog.pain_note}
+            )
+          `;
+        }
+      }
+
+      const painRows = await t`
+        select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
+        from pain_logs
+        where workout_id = ${createdWorkout.id}
+        order by created_at desc
+      `;
+
       return {
         ...createdWorkout,
-        padel_session: null
+        padel_session: null,
+        pain_logs: painRows
       };
     }
 
@@ -108,7 +167,10 @@ export async function POST(request: Request) {
         partner,
         opponents,
         results,
+        match_status,
         unforced_errors_level,
+        coach_summary,
+        coach_tags,
         tags,
         ball_share
       )
@@ -118,7 +180,10 @@ export async function POST(request: Request) {
         ${padel?.partner ? String(padel.partner) : null},
         ${padel?.opponents ? String(padel.opponents) : null},
         ${padel?.results ? String(padel.results) : null},
+        ${parseMatchStatus(padel?.match_status)},
         ${parseUnforcedErrorsLevel(padel?.unforced_errors_level)},
+        null,
+        ${[]},
         ${Array.isArray(padel?.tags) ? padel.tags : []},
         ${parseNumber(padel?.ball_share)}
       )
@@ -129,15 +194,49 @@ export async function POST(request: Request) {
         partner,
         opponents,
         results,
+        match_status,
         unforced_errors_level,
+        coach_summary,
+        coach_tags,
         tags,
         ball_share,
         created_at
     `;
 
+    if (painLogs.length > 0) {
+      for (const painLog of painLogs.slice(0, 2)) {
+        await t`
+          insert into pain_logs (
+            user_id,
+            workout_id,
+            pain_area,
+            pain_intensity_0_10,
+            pain_type,
+            pain_note
+          )
+          values (
+            ${session.user.id},
+            ${createdWorkout.id},
+            ${painLog.pain_area},
+            ${painLog.pain_intensity_0_10},
+            ${painLog.pain_type},
+            ${painLog.pain_note}
+          )
+        `;
+      }
+    }
+
+    const painRows = await t`
+      select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
+      from pain_logs
+      where workout_id = ${createdWorkout.id}
+      order by created_at desc
+    `;
+
     return {
       ...createdWorkout,
-      padel_session: padelRows[0]
+      padel_session: padelRows[0],
+      pain_logs: painRows
     };
   });
 
