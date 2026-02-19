@@ -86,7 +86,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   try {
-    const result = await sql.begin(async (t: typeof sql) => {
+    const result = await sql.begin(async (t) => {
       const updatedWorkoutRows = await t`
         update workouts
         set
