@@ -8,6 +8,11 @@ interface WeightTrendChartProps {
   entries: WeightEntry[];
 }
 
+function toWeightNumber(value: unknown) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
 export function WeightTrendChart({ entries }: WeightTrendChartProps) {
   const ordered = [...entries].sort((a, b) => a.date.localeCompare(b.date));
 
@@ -19,7 +24,7 @@ export function WeightTrendChart({ entries }: WeightTrendChartProps) {
     );
   }
 
-  const weights = ordered.map((entry) => entry.weight_kg);
+  const weights = ordered.map((entry) => toWeightNumber(entry.weight_kg));
   const min = Math.min(...weights);
   const max = Math.max(...weights);
   const range = max - min || 1;
@@ -27,7 +32,7 @@ export function WeightTrendChart({ entries }: WeightTrendChartProps) {
   const points = ordered
     .map((entry, index) => {
       const x = (index / (ordered.length - 1)) * 100;
-      const y = 100 - ((entry.weight_kg - min) / range) * 100;
+      const y = 100 - ((toWeightNumber(entry.weight_kg) - min) / range) * 100;
       return `${x},${y}`;
     })
     .join(" ");
@@ -50,7 +55,7 @@ export function WeightTrendChart({ entries }: WeightTrendChartProps) {
           />
           {ordered.map((entry, index) => {
             const x = (index / (ordered.length - 1)) * 100;
-            const y = 100 - ((entry.weight_kg - min) / range) * 100;
+            const y = 100 - ((toWeightNumber(entry.weight_kg) - min) / range) * 100;
             return <circle key={entry.id} cx={x} cy={y} r="1.7" fill="rgb(124, 58, 237)" />;
           })}
         </svg>

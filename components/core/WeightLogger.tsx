@@ -16,6 +16,11 @@ import { createWeight, fetchWeights } from "@/lib/data/queries";
 import type { WeightEntry } from "@/lib/types";
 import { formatSwedishDate, getDefaultSunday, parseISODate, toISODate } from "@/lib/utils/date";
 
+function toWeightNumber(value: unknown) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
 function calculateWeeklyDelta(entries: WeightEntry[]) {
   if (entries.length < 2) {
     return null;
@@ -26,7 +31,7 @@ function calculateWeeklyDelta(entries: WeightEntry[]) {
   const threshold = subDays(latestDate, 6);
 
   const lastWeek = entries.find((entry) => parseISODate(entry.date) <= threshold) ?? entries[1];
-  const delta = latest.weight_kg - lastWeek.weight_kg;
+  const delta = toWeightNumber(latest.weight_kg) - toWeightNumber(lastWeek.weight_kg);
 
   return {
     delta,
@@ -53,7 +58,12 @@ export function WeightLogger() {
 
     try {
       const weightEntries = await fetchWeights();
-      setEntries(weightEntries);
+      setEntries(
+        weightEntries.map((entry) => ({
+          ...entry,
+          weight_kg: toWeightNumber(entry.weight_kg)
+        }))
+      );
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Kunde inte hämta viktdata.");
     } finally {
@@ -191,7 +201,7 @@ export function WeightLogger() {
                   <p className="text-sm font-medium">{formatSwedishDate(entry.date)}</p>
                   {entry.note ? <p className="text-xs text-muted-foreground">{entry.note}</p> : null}
                 </div>
-                <Badge>{entry.weight_kg.toFixed(1)} kg</Badge>
+                <Badge>{toWeightNumber(entry.weight_kg).toFixed(1)} kg</Badge>
               </motion.div>
             ))}
           </AnimatePresence>
