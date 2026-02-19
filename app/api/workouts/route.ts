@@ -266,6 +266,58 @@ async function safeInsertPadelSession(
   }
 }
 
+async function safeInsertWorkout(
+  t: typeof sql,
+  userId: string,
+  workout: Record<string, unknown>,
+  date: string,
+  type: string,
+  durationMin: number
+) {
+  try {
+    const workoutRows = await t`
+      insert into workouts (user_id, date, type, duration_min, intensity_1_5, feeling_1_5, note)
+      values (
+        ${userId},
+        ${date},
+        ${type},
+        ${durationMin},
+        ${parseNumber(workout.intensity_1_5)},
+        ${parseNumber(workout.feeling_1_5)},
+        ${workout.note ? String(workout.note) : null}
+      )
+      returning id, user_id, date::text as date, type, duration_min, intensity_1_5, feeling_1_5, note, created_at
+    `;
+    return workoutRows[0];
+  } catch (error) {
+    if (!isSchemaDriftError(error)) {
+      throw error;
+    }
+
+    const legacyWorkoutRows = await t`
+      insert into workouts (user_id, date, type, duration_min, note)
+      values (
+        ${userId},
+        ${date},
+        ${type},
+        ${durationMin},
+        ${workout.note ? String(workout.note) : null}
+      )
+      returning
+        id,
+        user_id,
+        date::text as date,
+        type,
+        duration_min,
+        null::numeric as intensity_1_5,
+        null::numeric as feeling_1_5,
+        note,
+        created_at
+    `;
+    return legacyWorkoutRows[0];
+  }
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -361,21 +413,7 @@ export async function POST(request: Request) {
     const created = await sql.begin(async (tx: unknown) => {
       const t = tx as unknown as typeof sql;
 
-      const workoutRows = await t`
-      insert into workouts (user_id, date, type, duration_min, intensity_1_5, feeling_1_5, note)
-      values (
-        ${session.user.id},
-        ${date},
-        ${type},
-        ${durationMin},
-        ${parseNumber(workout.intensity_1_5)},
-        ${parseNumber(workout.feeling_1_5)},
-        ${workout.note ? String(workout.note) : null}
-      )
-      returning id, user_id, date::text as date, type, duration_min, intensity_1_5, feeling_1_5, note, created_at
-    `;
-
-      const createdWorkout = workoutRows[0];
+      const createdWorkout = await safeInsertWorkout(t, session.user.id, workout, date, type, durationMin);
 
       if (type !== "padel") {
         await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
