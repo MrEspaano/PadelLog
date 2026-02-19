@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="auth-grid-lines animate-grid-drift absolute inset-0 opacity-70" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-white/35 dark:from-transparent dark:to-slate-950/40" />
 
-      <div className="pointer-events-none absolute left-10 top-1/2 hidden -translate-y-1/2 opacity-[0.22] lg:block dark:opacity-[0.2]">
+      <div className="pointer-events-none absolute left-[17%] top-1/2 hidden -translate-y-1/2 opacity-[0.4] lg:block dark:opacity-[0.34]">
         <LoginPadelBall className="h-[190px] w-[190px]" />
       </div>
 
