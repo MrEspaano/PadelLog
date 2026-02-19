@@ -20,8 +20,19 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   });
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: "Request failed" }));
-    throw new Error(body.error || `Request failed with status ${response.status}`);
+    const raw = await response.text().catch(() => "");
+    let message = "";
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as { error?: string };
+        message = parsed.error ?? "";
+      } catch {
+        message = raw;
+      }
+    }
+
+    throw new Error(message || `Request failed with status ${response.status}`);
   }
 
   return (await response.json()) as T;

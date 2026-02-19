@@ -52,6 +52,28 @@ function isMissingPainLogsTable(error: unknown) {
   return message.includes("relation") && message.includes("pain_logs") && message.includes("does not exist");
 }
 
+function isSchemaDriftError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  const maybeCode = (error as { code?: string }).code;
+  if (maybeCode === "42P01" || maybeCode === "42703") {
+    return true;
+  }
+
+  return (
+    (message.includes("does not exist") && message.includes("relation")) ||
+    (message.includes("does not exist") && message.includes("column")) ||
+    message.includes("pain_logs") ||
+    message.includes("match_status") ||
+    message.includes("unforced_errors_level") ||
+    message.includes("coach_summary") ||
+    message.includes("coach_tags")
+  );
+}
+
 async function safeInsertPainLogs(
   t: typeof sql,
   userId: string,
@@ -199,10 +221,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Datum, typ och duration krävs." }, { status: 400 });
   }
 
-  const created = await sql.begin(async (tx: unknown) => {
-    const t = tx as unknown as typeof sql;
+  try {
+    const created = await sql.begin(async (tx: unknown) => {
+      const t = tx as unknown as typeof sql;
 
-    const workoutRows = await t`
+      const workoutRows = await t`
       insert into workouts (user_id, date, type, duration_min, intensity_1_5, feeling_1_5, note)
       values (
         ${session.user.id},
@@ -216,32 +239,32 @@ export async function POST(request: Request) {
       returning id, user_id, date::text as date, type, duration_min, intensity_1_5, feeling_1_5, note, created_at
     `;
 
-    const createdWorkout = workoutRows[0];
+      const createdWorkout = workoutRows[0];
 
-    if (type !== "padel") {
-      await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
-      const painRows = await safeFetchPainRows(t, createdWorkout.id);
+      if (type !== "padel") {
+        await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
+        const painRows = await safeFetchPainRows(t, createdWorkout.id);
 
-      return {
-        ...createdWorkout,
-        padel_session: null,
-        pain_logs: painRows
-      };
-    }
-
-    const coach = generateCoachSummary(
-      {
-        intensity_1_5: parseNumber(workout.intensity_1_5),
-        feeling_1_5: parseNumber(workout.feeling_1_5)
-      },
-      {
-        results: padel?.results ? String(padel.results) : null,
-        match_status: parseMatchStatus(padel?.match_status),
-        tags: Array.isArray(padel?.tags) ? padel.tags : []
+        return {
+          ...createdWorkout,
+          padel_session: null,
+          pain_logs: painRows
+        };
       }
-    );
 
-    const padelRowsReal = await t`
+      const coach = generateCoachSummary(
+        {
+          intensity_1_5: parseNumber(workout.intensity_1_5),
+          feeling_1_5: parseNumber(workout.feeling_1_5)
+        },
+        {
+          results: padel?.results ? String(padel.results) : null,
+          match_status: parseMatchStatus(padel?.match_status),
+          tags: Array.isArray(padel?.tags) ? padel.tags : []
+        }
+      );
+
+      const padelRowsReal = await t`
       insert into padel_sessions (
         workout_id,
         session_format,
@@ -284,15 +307,26 @@ export async function POST(request: Request) {
         created_at
     `;
 
-    await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
-    const painRows = await safeFetchPainRows(t, createdWorkout.id);
+      await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
+      const painRows = await safeFetchPainRows(t, createdWorkout.id);
 
-    return {
-      ...createdWorkout,
-      padel_session: padelRowsReal[0],
-      pain_logs: painRows
-    };
-  });
+      return {
+        ...createdWorkout,
+        padel_session: padelRowsReal[0],
+        pain_logs: painRows
+      };
+    });
 
-  return NextResponse.json(created, { status: 201 });
+    return NextResponse.json(created, { status: 201 });
+  } catch (error) {
+    if (isSchemaDriftError(error)) {
+      return NextResponse.json(
+        { error: "Databasschema saknar nya fält. Kör senaste SQL från neon/schema.sql i Neon och deploya igen." },
+        { status: 500 }
+      );
+    }
+
+    console.error("POST /api/workouts failed:", error);
+    return NextResponse.json({ error: "Kunde inte spara pass just nu." }, { status: 500 });
+  }
 }
