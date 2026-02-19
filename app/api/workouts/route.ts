@@ -453,8 +453,14 @@ export async function POST(request: Request) {
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     if (isSchemaDriftError(error)) {
+      const detail =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "okänt schemafel";
       return NextResponse.json(
-        { error: "Databasschema saknar nya fält. Kör senaste SQL från neon/schema.sql i Neon och deploya igen." },
+        { error: `Schemafel i databas: ${detail}` },
         { status: 500 }
       );
     }
