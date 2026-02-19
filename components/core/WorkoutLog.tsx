@@ -32,6 +32,15 @@ type EditForm = {
   unforced_errors_level: UnforcedErrorsLevel | "";
 };
 
+function safePainLogs(workout: WorkoutWithPadel) {
+  return Array.isArray(workout.pain_logs) ? workout.pain_logs : [];
+}
+
+function safePadelTags(workout: WorkoutWithPadel) {
+  const tags = workout.padel_session?.tags;
+  return Array.isArray(tags) ? tags : [];
+}
+
 function intensityOptions() {
   return Array.from({ length: 9 }, (_, index) => (index + 2) / 2);
 }
@@ -114,7 +123,12 @@ export function WorkoutLog() {
 
       try {
         const data = await fetchWorkouts();
-        setWorkouts(data);
+        setWorkouts(
+          data.map((workout) => ({
+            ...workout,
+            pain_logs: Array.isArray(workout.pain_logs) ? workout.pain_logs : []
+          }))
+        );
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : "Kunde inte hämta passlogg.");
       } finally {
@@ -143,7 +157,7 @@ export function WorkoutLog() {
       }
 
       if (normalizedTags) {
-        const workoutTags = workout.padel_session?.tags ?? [];
+        const workoutTags = safePadelTags(workout);
         const hasTag = workoutTags.some((tag) => tag.toLowerCase().includes(normalizedTags));
         if (!hasTag) {
           return false;
@@ -448,8 +462,8 @@ export function WorkoutLog() {
                             {workout.padel_session.coach_summary ? (
                               <p className="text-primary">Coach: {truncateCoachSummary(workout.padel_session.coach_summary)}</p>
                             ) : null}
-                            {workout.pain_logs.length > 0 ? (
-                              <p>Smärta: {workout.pain_logs.map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`).join(", ")}</p>
+                            {safePainLogs(workout).length > 0 ? (
+                              <p>Smärta: {safePainLogs(workout).map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`).join(", ")}</p>
                             ) : null}
                           </div>
                         ) : (
@@ -515,10 +529,10 @@ export function WorkoutLog() {
                     <span className="font-medium">Coach:</span> {truncateCoachSummary(workout.padel_session.coach_summary)}
                   </p>
                 ) : null}
-                {workout.pain_logs.length > 0 ? (
+                {safePainLogs(workout).length > 0 ? (
                   <p className="mt-2 text-sm">
                     <span className="font-medium">Smärta:</span>{" "}
-                    {workout.pain_logs.map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`).join(", ")}
+                    {safePainLogs(workout).map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`).join(", ")}
                   </p>
                 ) : null}
                 {workout.note ? <p className="mt-2 text-sm">{workout.note}</p> : null}
