@@ -1,4 +1,4 @@
-import { PadelIcon } from "@/components/padel/PadelIcon";
+import { LoginPadelBall } from "@/components/padel/LoginPadelBall";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -7,8 +7,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="auth-grid-lines animate-grid-drift absolute inset-0 opacity-70" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-white/35 dark:from-transparent dark:to-slate-950/40" />
 
-      <div className="pointer-events-none absolute -left-16 top-1/4 hidden opacity-7 md:block dark:opacity-[0.08]">
-        <PadelIcon mode="ball" className="h-44 w-44 animate-slow-spin text-padel-blue" />
+      <div className="pointer-events-none absolute left-6 top-1/2 hidden -translate-y-1/2 opacity-[0.09] lg:block dark:opacity-[0.1]">
+        <LoginPadelBall className="h-[170px] w-[170px]" />
       </div>
 
       <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
