@@ -44,7 +44,7 @@ export function WinRatePanel() {
     void load();
   }, [days]);
 
-  const totalRate = data?.total.winRate;
+  const totalRate = data?.total.winRate ?? null;
 
   return (
     <Card>
@@ -81,7 +81,9 @@ export function WinRatePanel() {
           <>
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">Total vinstprocent</p>
-              <p className="metric-nums text-3xl font-semibold">{totalRate === null ? "-" : `${totalRate.toFixed(1)}%`}</p>
+              <p className="metric-nums text-3xl font-semibold">
+                {totalRate === null || totalRate === undefined ? "-" : `${totalRate.toFixed(1)}%`}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {data.total.wins} vinster / {data.total.losses} förluster · {data.total.unclear} oklara
               </p>
