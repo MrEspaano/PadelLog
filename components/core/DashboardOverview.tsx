@@ -37,21 +37,37 @@ export function DashboardOverview() {
       setLoading(true);
       setError(null);
 
-      try {
-        const [fetchedWeights, fetchedWorkouts, fetchedWinRate] = await Promise.all([
-          fetchWeights(),
-          fetchWorkouts(),
-          fetchWinRateStats(30)
-        ]);
+      const [weightsResult, workoutsResult, winRateResult] = await Promise.allSettled([
+        fetchWeights(),
+        fetchWorkouts(),
+        fetchWinRateStats(30)
+      ]);
 
-        setWeights(fetchedWeights);
-        setWorkouts(fetchedWorkouts);
-        setWinRate(fetchedWinRate.total.winRate);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "Kunde inte läsa dashboard-data.");
-      } finally {
-        setLoading(false);
+      const coreErrors: string[] = [];
+
+      if (weightsResult.status === "fulfilled") {
+        setWeights(weightsResult.value);
+      } else {
+        coreErrors.push("vikt");
       }
+
+      if (workoutsResult.status === "fulfilled") {
+        setWorkouts(workoutsResult.value);
+      } else {
+        coreErrors.push("pass");
+      }
+
+      if (winRateResult.status === "fulfilled") {
+        setWinRate(winRateResult.value.total.winRate ?? null);
+      } else {
+        setWinRate(null);
+      }
+
+      if (coreErrors.length > 0) {
+        setError("Kunde inte läsa all dashboard-data just nu.");
+      }
+
+      setLoading(false);
     }
 
     void load();
