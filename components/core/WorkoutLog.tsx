@@ -26,6 +26,19 @@ function formatUnforcedLevel(value: string | null | undefined) {
   return "-";
 }
 
+function formatMatchStatus(value: string | null | undefined) {
+  if (value === "win") return "Vinst";
+  if (value === "loss") return "Förlust";
+  if (value === "aborted") return "Avbruten";
+  return "Oklart";
+}
+
+function truncateCoachSummary(summary: string | null | undefined) {
+  if (!summary) return null;
+  if (summary.length <= 72) return summary;
+  return `${summary.slice(0, 72)}...`;
+}
+
 function sortWorkouts(items: WorkoutWithPadel[], sort: string) {
   return [...items].sort((a, b) => {
     if (sort === "date-asc") {
@@ -244,7 +257,21 @@ export function WorkoutLog() {
                           <p>Partner: {workout.padel_session.partner || "-"}</p>
                           <p>Motstånd: {workout.padel_session.opponents || "-"}</p>
                           <p>Resultat: {workout.padel_session.results || "-"}</p>
+                          <p>Status: {formatMatchStatus(workout.padel_session.match_status)}</p>
                           <p>Unforced: {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}</p>
+                          {workout.padel_session.coach_summary ? (
+                            <p className="text-primary">
+                              Coach: {truncateCoachSummary(workout.padel_session.coach_summary)}
+                            </p>
+                          ) : null}
+                          {workout.pain_logs.length > 0 ? (
+                            <p>
+                              Smärta:{" "}
+                              {workout.pain_logs
+                                .map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`)
+                                .join(", ")}
+                            </p>
+                          ) : null}
                         </div>
                       ) : (
                         "-"
@@ -289,8 +316,24 @@ export function WorkoutLog() {
                 ) : null}
                 {workout.padel_session ? (
                   <p className="mt-2 text-sm">
+                    <span className="font-medium">Status:</span> {formatMatchStatus(workout.padel_session.match_status)}
+                  </p>
+                ) : null}
+                {workout.padel_session ? (
+                  <p className="mt-2 text-sm">
                     <span className="font-medium">Mängd unforced:</span>{" "}
                     {formatUnforcedLevel(workout.padel_session.unforced_errors_level)}
+                  </p>
+                ) : null}
+                {workout.padel_session?.coach_summary ? (
+                  <p className="mt-2 text-sm text-primary">
+                    <span className="font-medium">Coach:</span> {truncateCoachSummary(workout.padel_session.coach_summary)}
+                  </p>
+                ) : null}
+                {workout.pain_logs.length > 0 ? (
+                  <p className="mt-2 text-sm">
+                    <span className="font-medium">Smärta:</span>{" "}
+                    {workout.pain_logs.map((log) => `${log.pain_area} (${log.pain_intensity_0_10}/10)`).join(", ")}
                   </p>
                 ) : null}
                 {workout.note ? <p className="mt-2 text-sm">{workout.note}</p> : null}

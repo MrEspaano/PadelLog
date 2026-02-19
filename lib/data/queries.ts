@@ -5,7 +5,6 @@ import type {
   PadelSessionInsert,
   WeightEntry,
   WeightInsert,
-  Workout,
   WorkoutInsert,
   WorkoutWithPadel
 } from "@/lib/types";
@@ -63,7 +62,7 @@ export async function createWorkoutWithOptionalPadel(
   padel?: PadelSessionInsert,
   painLogs: PainLogInsert[] = []
 ) {
-  const created = await requestJson<WorkoutWithPadel>("/api/workouts", {
+  return requestJson<WorkoutWithPadel>("/api/workouts", {
     method: "POST",
     body: JSON.stringify({
       workout,
@@ -71,11 +70,6 @@ export async function createWorkoutWithOptionalPadel(
       pain_logs: painLogs
     })
   });
-
-  return {
-    workout: created as Workout,
-    padel: created.padel_session
-  };
 }
 
 export async function deleteWorkout(workoutId: string) {

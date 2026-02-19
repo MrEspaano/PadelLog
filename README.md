@@ -16,10 +16,13 @@ Modern tränings- och padelanalys som fullstack-webbapp.
 
 - Viktlogg (söndagsdefault, "Logga vikt idag", veckodelta, trend)
 - Padel-logg (en fråga i taget, skippbara steg, sammanfattningskort)
+- Vinstprocent (total, per partner, per motstånd, periodfilter 30/90/allt)
+- Smärtlogg kopplad till pass (0..2 poster direkt efter sparning)
+- Coach Mode (autogenererad 1–2 menings analys per padelpass)
 - Veckorutnät (ISO-vecka, mån–sön, vila, klick/tap för dagspass)
 - Passlogg (filter, sortering, sök, desktop-datagrid, mobile-cards)
 - Excel-export (`Passlogg` + `Veckorutnät`, datumintervall i filnamn)
-- Kritisk coach (3–10 senaste padelpass, KPI, mönster, alternativa tolkningar)
+- Kritisk coach (3–10 senaste padelpass, mönster, alternativa tolkningar)
 
 ## Projektstruktur
 
@@ -41,6 +44,7 @@ Modern tränings- och padelanalys som fullstack-webbapp.
 1. Skapa projekt i Neon.
 2. Kopiera `DATABASE_URL`.
 3. Kör SQL från `/neon/schema.sql` i Neon SQL editor.
+4. Vid framtida schemaändringar: kör nya migrations-SQL manuellt i Neon SQL editor och committa ändringen i `neon/schema.sql`.
 
 ## 2) Environment variables
 
