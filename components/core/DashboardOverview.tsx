@@ -17,7 +17,7 @@ import type { WeightEntry, WorkoutWithPadel } from "@/lib/types";
 const quickLinks = [
   { href: "/padel", title: "Logga padelpass", description: "Stegvis loggning, en fråga i taget", icon: Activity },
   { href: "/weights", title: "Uppdatera vikt", description: "Söndagsfokus + snabbknapp idag", icon: Scale },
-  { href: "/coach", title: "Öppna statistik", description: "Vinstprocent, smärttrender och coach", icon: Sparkles }
+  { href: "/stats", title: "Öppna statistik", description: "Snittpass samt totalt vinster och förluster", icon: Sparkles }
 ];
 
 function toSafeNumber(value: unknown) {
