@@ -12,7 +12,7 @@ interface DesktopTopbarProps {
 
 export function DesktopTopbar({ title, userEmail }: DesktopTopbarProps) {
   return (
-    <header className="mat-surface mb-4 flex items-center justify-between rounded-2xl border border-padel-line/70 bg-white/85 px-4 py-2 dark:border-slate-700/85 dark:bg-slate-950/72">
+    <header className="mb-4 flex items-center justify-between rounded-2xl border border-padel-line/70 bg-white/85 px-4 py-2 dark:border-slate-700/85 dark:bg-gradient-to-r dark:from-[#121f34] dark:to-[#0e1a2c]">
       <div className="flex items-center gap-2">
         <div className="rounded-full bg-padel-court p-2 text-padel-blue dark:bg-slate-800 dark:text-padel-blue-soft">
           <PadelIcon mode="racket" className="h-3.5 w-3.5" />

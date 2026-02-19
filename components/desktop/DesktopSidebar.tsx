@@ -12,7 +12,7 @@ export function DesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="mat-surface sticky top-0 hidden h-screen w-72 shrink-0 border-r border-padel-line/60 bg-white/85 p-5 dark:border-slate-700/80 dark:bg-slate-900/78 lg:flex lg:flex-col">
+    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-padel-line/60 bg-white/85 p-5 dark:border-slate-700/80 dark:bg-gradient-to-b dark:from-[#101b2e] dark:to-[#0b1425] lg:flex lg:flex-col">
       <div className="relative overflow-hidden rounded-2xl border border-padel-line/60 bg-gradient-to-br from-[#0E4D92] to-[#2F78C6] p-4 text-white shadow-stadium">
         <div className="pointer-events-none absolute inset-0 bg-court-lines opacity-20" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-black/8" />
@@ -35,7 +35,7 @@ export function DesktopSidebar() {
                 "flex items-center gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition",
                 isActive
                   ? "border-padel-line/70 bg-primary text-primary-foreground shadow-glow-blue"
-                  : "border-transparent text-muted-foreground hover:border-padel-line/50 hover:bg-white dark:hover:border-slate-600 dark:hover:bg-slate-800/70 dark:hover:text-slate-100"
+                  : "border-transparent text-muted-foreground hover:border-padel-line/50 hover:bg-white dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800/85 dark:hover:text-slate-100"
               )}
             >
               <Icon className="h-4 w-4" />
