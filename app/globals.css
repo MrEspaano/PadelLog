@@ -46,6 +46,15 @@ body {
   background-attachment: fixed;
 }
 
+.dark body {
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(31, 108, 191, 0.18), transparent 30%),
+    radial-gradient(circle at 82% 12%, rgba(45, 128, 216, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(7, 17, 32, 0.95), rgba(8, 13, 24, 0.99)),
+    radial-gradient(circle at 1px 1px, rgba(93, 127, 168, 0.16) 1px, transparent 0);
+  background-size: auto, auto, auto, 24px 24px;
+}
+
 main {
   @apply min-h-screen;
 }
@@ -58,11 +67,24 @@ main {
     background-size: 52px 52px;
   }
 
+  .dark .court-lines {
+    background-image:
+      linear-gradient(to right, rgba(92, 133, 182, 0.18) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(92, 133, 182, 0.18) 1px, transparent 1px);
+  }
+
   .mat-surface {
     background-image:
       radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.48), transparent 52%),
       radial-gradient(circle at 100% 0, rgba(47, 120, 198, 0.1), transparent 36%);
     backdrop-filter: blur(6px);
+  }
+
+  .dark .mat-surface {
+    background-image:
+      radial-gradient(circle at 0 0, rgba(46, 96, 158, 0.22), transparent 48%),
+      radial-gradient(circle at 100% 0, rgba(128, 170, 219, 0.1), transparent 32%);
+    backdrop-filter: blur(8px);
   }
 
   .metric-nums {

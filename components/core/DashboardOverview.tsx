@@ -150,9 +150,9 @@ export function DashboardOverview() {
             <Link
               key={link.href}
               href={link.href}
-              className="group relative rounded-2xl border border-padel-line/60 bg-white/85 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-blue"
+              className="group relative rounded-2xl border border-padel-line/60 bg-white/85 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-blue dark:border-slate-700/80 dark:bg-slate-900/82"
             >
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-padel-court text-padel-blue">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-padel-court text-padel-blue dark:bg-slate-800 dark:text-padel-blue-soft">
                 <Icon className="h-4 w-4" />
               </div>
               <p className="text-sm font-semibold">{link.title}</p>
