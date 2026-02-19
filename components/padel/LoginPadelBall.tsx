@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
@@ -10,39 +9,16 @@ interface LoginPadelBallProps {
 }
 
 export function LoginPadelBall({ className }: LoginPadelBallProps) {
-  const [hasBounced, setHasBounced] = useState(false);
-
   return (
     <div className={cn("pointer-events-none select-none", className)} aria-hidden="true">
       <motion.div
-        initial={false}
-        animate={
-          hasBounced
-            ? { y: 0, scaleX: 1, scaleY: 1 }
-            : {
-                y: [0, -72, 0, -48, 0, -28, 0],
-                scaleX: [1, 1.01, 0.93, 1, 0.95, 1, 0.97, 1],
-                scaleY: [1, 0.98, 1.06, 1, 1.04, 1, 1.02, 1]
-              }
-        }
-        transition={
-          hasBounced
-            ? { duration: 0.2, ease: "easeOut" }
-            : { duration: 2.1, times: [0, 0.14, 0.3, 0.46, 0.62, 0.76, 0.91, 1], ease: "easeInOut" }
-        }
-        style={{ transformOrigin: "50% 100%" }}
-        onAnimationComplete={() => {
-          if (!hasBounced) {
-            setHasBounced(true);
-          }
-        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 28, ease: "linear", repeat: Number.POSITIVE_INFINITY }}
       >
-        <motion.svg
+        <svg
           viewBox="0 0 120 120"
           className="h-full w-full drop-shadow-[0_16px_24px_rgba(14,77,146,0.28)]"
           fill="none"
-          animate={hasBounced ? { rotate: [0, 360] } : { rotate: 0 }}
-          transition={hasBounced ? { duration: 30, ease: "linear", repeat: Number.POSITIVE_INFINITY } : undefined}
         >
           <circle cx="60" cy="60" r="54" className="fill-padel-lime" />
           <circle cx="60" cy="60" r="54" className="stroke-padel-blue/50" strokeWidth="3.5" />
@@ -58,7 +34,7 @@ export function LoginPadelBall({ className }: LoginPadelBallProps) {
             <circle cx="53.5" cy="83" r="2.9" />
             <circle cx="82.5" cy="45" r="2.8" />
           </g>
-        </motion.svg>
+        </svg>
       </motion.div>
     </div>
   );
