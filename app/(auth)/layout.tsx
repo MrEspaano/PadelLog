@@ -15,7 +15,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <ThemeToggle />
       </div>
 
-      <section className="relative z-10 w-full max-w-[480px]">
+      <section className="relative z-10 flex w-full max-w-[980px] flex-col items-center">
         <div className="mb-6 text-center">
           <h1 className="font-display text-4xl font-semibold tracking-tight text-padel-blue dark:text-padel-blue-soft">PadelFocus</h1>
           <p className="mt-2 text-sm text-foreground/80 dark:text-foreground/75">Analysera ditt spel. Bygg din nivå.</p>
