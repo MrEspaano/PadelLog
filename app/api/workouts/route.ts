@@ -130,6 +130,102 @@ async function safeFetchPainRows(t: typeof sql, workoutId: string) {
   }
 }
 
+async function safeInsertPadelSession(
+  t: typeof sql,
+  workoutId: string,
+  padel: Record<string, unknown> | null,
+  coach: { summary: string; tags: string[] }
+) {
+  try {
+    const padelRows = await t`
+      insert into padel_sessions (
+        workout_id,
+        session_format,
+        partner,
+        opponents,
+        results,
+        match_status,
+        unforced_errors_level,
+        coach_summary,
+        coach_tags,
+        tags,
+        ball_share
+      )
+      values (
+        ${workoutId},
+        ${padel?.session_format ? String(padel.session_format) : null},
+        ${padel?.partner ? String(padel.partner) : null},
+        ${padel?.opponents ? String(padel.opponents) : null},
+        ${padel?.results ? String(padel.results) : null},
+        ${parseMatchStatus(padel?.match_status)},
+        ${parseUnforcedErrorsLevel(padel?.unforced_errors_level)},
+        ${coach.summary},
+        ${coach.tags},
+        ${Array.isArray(padel?.tags) ? padel.tags : []},
+        ${parseNumber(padel?.ball_share)}
+      )
+      returning
+        id,
+        workout_id,
+        session_format,
+        partner,
+        opponents,
+        results,
+        match_status,
+        unforced_errors_level,
+        coach_summary,
+        coach_tags,
+        tags,
+        ball_share,
+        created_at
+    `;
+
+    return padelRows[0];
+  } catch (error) {
+    if (!isSchemaDriftError(error)) {
+      throw error;
+    }
+
+    // Fallback for environments where the latest padel_sessions columns are not yet migrated.
+    const legacyPadelRows = await t`
+      insert into padel_sessions (
+        workout_id,
+        session_format,
+        partner,
+        opponents,
+        results,
+        tags,
+        ball_share
+      )
+      values (
+        ${workoutId},
+        ${padel?.session_format ? String(padel.session_format) : null},
+        ${padel?.partner ? String(padel.partner) : null},
+        ${padel?.opponents ? String(padel.opponents) : null},
+        ${padel?.results ? String(padel.results) : null},
+        ${Array.isArray(padel?.tags) ? padel.tags : []},
+        ${parseNumber(padel?.ball_share)}
+      )
+      returning
+        id,
+        workout_id,
+        session_format,
+        partner,
+        opponents,
+        results,
+        null::text as match_status,
+        null::text as unforced_errors_level,
+        null::text as coach_summary,
+        '{}'::text[] as coach_tags,
+        tags,
+        ball_share,
+        created_at
+    `;
+
+    return legacyPadelRows[0];
+  }
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -264,55 +360,14 @@ export async function POST(request: Request) {
         }
       );
 
-      const padelRowsReal = await t`
-      insert into padel_sessions (
-        workout_id,
-        session_format,
-        partner,
-        opponents,
-        results,
-        match_status,
-        unforced_errors_level,
-        coach_summary,
-        coach_tags,
-        tags,
-        ball_share
-      )
-      values (
-        ${createdWorkout.id},
-        ${padel?.session_format ? String(padel.session_format) : null},
-        ${padel?.partner ? String(padel.partner) : null},
-        ${padel?.opponents ? String(padel.opponents) : null},
-        ${padel?.results ? String(padel.results) : null},
-        ${parseMatchStatus(padel?.match_status)},
-        ${parseUnforcedErrorsLevel(padel?.unforced_errors_level)},
-        ${coach.summary},
-        ${coach.tags},
-        ${Array.isArray(padel?.tags) ? padel.tags : []},
-        ${parseNumber(padel?.ball_share)}
-      )
-      returning
-        id,
-        workout_id,
-        session_format,
-        partner,
-        opponents,
-        results,
-        match_status,
-        unforced_errors_level,
-        coach_summary,
-        coach_tags,
-        tags,
-        ball_share,
-        created_at
-    `;
+      const createdPadelSession = await safeInsertPadelSession(t, createdWorkout.id, padel, coach);
 
       await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
       const painRows = await safeFetchPainRows(t, createdWorkout.id);
 
       return {
         ...createdWorkout,
-        padel_session: padelRowsReal[0],
+        padel_session: createdPadelSession,
         pain_logs: painRows
       };
     });
