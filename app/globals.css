@@ -17,6 +17,21 @@
   --ring: 211 82% 31%;
 }
 
+.dark {
+  --background: 217 27% 10%;
+  --foreground: 210 40% 96%;
+  --card: 218 23% 15%;
+  --card-foreground: 210 40% 96%;
+  --primary: 209 78% 60%;
+  --primary-foreground: 220 30% 10%;
+  --secondary: 214 30% 26%;
+  --secondary-foreground: 210 40% 96%;
+  --muted: 218 20% 18%;
+  --muted-foreground: 215 20% 72%;
+  --border: 217 17% 26%;
+  --ring: 209 78% 60%;
+}
+
 * {
   @apply border-border;
 }
@@ -54,5 +69,72 @@ main {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
+  }
+
+  .auth-court-bg {
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(47, 120, 198, 0.2), transparent 34%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.35), transparent 28%),
+      linear-gradient(160deg, rgba(224, 237, 255, 0.82), rgba(241, 248, 255, 0.94));
+  }
+
+  .dark .auth-court-bg {
+    background-image:
+      radial-gradient(circle at 50% 35%, rgba(56, 132, 214, 0.2), transparent 36%),
+      radial-gradient(circle at 78% 12%, rgba(194, 225, 255, 0.14), transparent 26%),
+      linear-gradient(165deg, rgba(16, 30, 51, 0.95), rgba(13, 20, 34, 0.98));
+  }
+
+  .auth-grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(35, 91, 155, 0.11) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(35, 91, 155, 0.11) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  .dark .auth-grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(127, 169, 214, 0.12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(127, 169, 214, 0.12) 1px, transparent 1px);
+  }
+
+  .primary-bounce {
+    transition: transform 160ms ease, box-shadow 200ms ease, background-color 200ms ease;
+  }
+
+  .primary-bounce:hover {
+    transform: scale(1.02);
+  }
+
+  .primary-bounce:active {
+    transform: scale(0.995);
+  }
+}
+
+@keyframes slowSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gridDrift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-24px, -12px, 0);
+  }
+}
+
+@layer utilities {
+  .animate-slow-spin {
+    animation: slowSpin 24s linear infinite;
+  }
+
+  .animate-grid-drift {
+    animation: gridDrift 16s linear infinite alternate;
   }
 }

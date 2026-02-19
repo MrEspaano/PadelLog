@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow, Space_Grotesk } from "next/font/google";
 
 import "@/app/globals.css";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { cn } from "@/lib/utils/cn";
 
 const barlow = Barlow({
@@ -23,8 +24,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sv">
-      <body className={cn(barlow.variable, barlow.className, spaceGrotesk.variable, "min-h-screen")}>{children}</body>
+    <html lang="sv" suppressHydrationWarning>
+      <body className={cn(barlow.variable, barlow.className, spaceGrotesk.variable, "min-h-screen")}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
