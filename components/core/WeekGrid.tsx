@@ -73,7 +73,7 @@ export function WeekGrid() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <CardTitle>Veckorutnät</CardTitle>
-            <CardDescription>ISO-vecka {getISOWeek(anchorDate)} · Mån–sön</CardDescription>
+            <CardDescription>Vecka {getISOWeek(anchorDate)} · Mån–sön</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => setAnchorDate((value) => addWeeks(value, -1))}>
@@ -110,7 +110,7 @@ export function WeekGrid() {
                   ) : (
                     <div className="space-y-1">
                       {dayWorkouts.slice(0, 2).map((workout) => (
-                        <div key={workout.id} className="rounded bg-white/85 px-2 py-1">
+                        <div key={workout.id} className="rounded bg-white/85 px-2 py-1 dark:bg-slate-800/85">
                           {formatTypeLabel(workout.type)} · {workout.duration_min} min
                         </div>
                       ))}
@@ -132,7 +132,7 @@ export function WeekGrid() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-xl border border-padel-line/60 bg-white/75 p-4"
+            className="rounded-xl border border-padel-line/60 bg-white/75 p-4 dark:border-slate-700/80 dark:bg-slate-900/72"
           >
             <div className="mb-3 flex items-center justify-between">
               <h4 className="font-semibold">{format(parseISODate(selectedDate), "EEEE d MMMM")}</h4>
