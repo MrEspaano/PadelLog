@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { generateCoachSummary } from "@/lib/coach/engine";
 import { sql } from "@/lib/db";
 import type { MatchStatus, PainLogInsert, UnforcedErrorsLevel } from "@/lib/types";
 
@@ -160,7 +161,19 @@ export async function POST(request: Request) {
       };
     }
 
-    const padelRows = await t`
+    const coach = generateCoachSummary(
+      {
+        intensity_1_5: parseNumber(workout.intensity_1_5),
+        feeling_1_5: parseNumber(workout.feeling_1_5)
+      },
+      {
+        results: padel?.results ? String(padel.results) : null,
+        match_status: parseMatchStatus(padel?.match_status),
+        tags: Array.isArray(padel?.tags) ? padel.tags : []
+      }
+    );
+
+    const padelRowsReal = await t`
       insert into padel_sessions (
         workout_id,
         session_format,
@@ -182,8 +195,8 @@ export async function POST(request: Request) {
         ${padel?.results ? String(padel.results) : null},
         ${parseMatchStatus(padel?.match_status)},
         ${parseUnforcedErrorsLevel(padel?.unforced_errors_level)},
-        null,
-        ${[]},
+        ${coach.summary},
+        ${coach.tags},
         ${Array.isArray(padel?.tags) ? padel.tags : []},
         ${parseNumber(padel?.ball_share)}
       )
@@ -235,7 +248,7 @@ export async function POST(request: Request) {
 
     return {
       ...createdWorkout,
-      padel_session: padelRows[0],
+      padel_session: padelRowsReal[0],
       pain_logs: painRows
     };
   });
