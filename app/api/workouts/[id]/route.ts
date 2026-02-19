@@ -76,10 +76,30 @@ export async function PUT(request: Request, context: RouteContext) {
   const body = await request.json().catch(() => ({}));
   const workout = typeof body?.workout === "object" && body.workout !== null ? body.workout : {};
   const padel = typeof body?.padel === "object" && body.padel !== null ? body.padel : null;
+  const padelInput = padel as {
+    session_format?: unknown;
+    partner?: unknown;
+    opponents?: unknown;
+    results?: unknown;
+    match_status?: unknown;
+    unforced_errors_level?: unknown;
+    tags?: unknown;
+    ball_share?: unknown;
+  } | null;
 
   const date = String((workout as { date?: unknown }).date ?? "");
   const durationMin = Number((workout as { duration_min?: unknown }).duration_min ?? 0);
   const type = parseWorkoutType((workout as { type?: unknown }).type);
+  const padelSessionFormat = padelInput?.session_format ? String(padelInput.session_format) : null;
+  const padelPartner = padelInput?.partner ? String(padelInput.partner) : null;
+  const padelOpponents = padelInput?.opponents ? String(padelInput.opponents) : null;
+  const padelResults = padelInput?.results ? String(padelInput.results) : null;
+  const padelMatchStatus = parseMatchStatus(padelInput?.match_status);
+  const padelUnforced = parseUnforcedErrorsLevel(padelInput?.unforced_errors_level);
+  const padelTags: string[] = Array.isArray(padelInput?.tags)
+    ? padelInput?.tags.filter((tag): tag is string => typeof tag === "string")
+    : [];
+  const padelBallShare = parseNumber(padelInput?.ball_share);
 
   if (!date || !Number.isFinite(durationMin) || durationMin <= 0) {
     return NextResponse.json({ error: "Datum och duration > 0 krävs." }, { status: 400 });
@@ -120,14 +140,14 @@ export async function PUT(request: Request, context: RouteContext) {
           const updatedPadelRows = await sql`
             update padel_sessions
             set
-              session_format = ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
-              partner = ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
-              opponents = ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
-              results = ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
-              match_status = ${parseMatchStatus((padel as { match_status?: unknown })?.match_status)},
-              unforced_errors_level = ${parseUnforcedErrorsLevel((padel as { unforced_errors_level?: unknown })?.unforced_errors_level)},
-              tags = ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
-              ball_share = ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
+              session_format = ${padelSessionFormat},
+              partner = ${padelPartner},
+              opponents = ${padelOpponents},
+              results = ${padelResults},
+              match_status = ${padelMatchStatus},
+              unforced_errors_level = ${padelUnforced},
+              tags = ${padelTags},
+              ball_share = ${padelBallShare}
             where workout_id = ${workoutId}
             returning
               id,
@@ -153,12 +173,12 @@ export async function PUT(request: Request, context: RouteContext) {
           const updatedPadelRows = await sql`
             update padel_sessions
             set
-              session_format = ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
-              partner = ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
-              opponents = ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
-              results = ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
-              tags = ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
-              ball_share = ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
+              session_format = ${padelSessionFormat},
+              partner = ${padelPartner},
+              opponents = ${padelOpponents},
+              results = ${padelResults},
+              tags = ${padelTags},
+              ball_share = ${padelBallShare}
             where workout_id = ${workoutId}
             returning
               id,
@@ -182,12 +202,12 @@ export async function PUT(request: Request, context: RouteContext) {
           insert into padel_sessions (workout_id, session_format, partner, opponents, results, tags, ball_share)
           values (
             ${workoutId},
-            ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
-            ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
-            ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
-            ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
-            ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
-            ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
+            ${padelSessionFormat},
+            ${padelPartner},
+            ${padelOpponents},
+            ${padelResults},
+            ${padelTags},
+            ${padelBallShare}
           )
           returning
             id,
