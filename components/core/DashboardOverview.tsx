@@ -11,14 +11,13 @@ import { PadelIcon } from "@/components/padel/PadelIcon";
 import { WeekGrid } from "@/components/core/WeekGrid";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { analyzeCriticalCoach } from "@/lib/analysis/criticalCoach";
-import { fetchLatestPadelSessions, fetchWeights, fetchWorkouts } from "@/lib/data/queries";
+import { fetchWeights, fetchWinRateStats, fetchWorkouts } from "@/lib/data/queries";
 import type { WeightEntry, WorkoutWithPadel } from "@/lib/types";
 
 const quickLinks = [
   { href: "/padel", title: "Logga padelpass", description: "Stegvis loggning, en fråga i taget", icon: Activity },
   { href: "/weights", title: "Uppdatera vikt", description: "Söndagsfokus + snabbknapp idag", icon: Scale },
-  { href: "/workouts", title: "Analysera passlogg", description: "Filter, datagrid och export", icon: Sparkles }
+  { href: "/coach", title: "Öppna statistik", description: "Vinstprocent, smärttrender och coach", icon: Sparkles }
 ];
 
 function toSafeNumber(value: unknown) {
@@ -29,7 +28,7 @@ function toSafeNumber(value: unknown) {
 export function DashboardOverview() {
   const [weights, setWeights] = useState<WeightEntry[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutWithPadel[]>([]);
-  const [padel, setPadel] = useState<WorkoutWithPadel[]>([]);
+  const [winRate, setWinRate] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,15 +38,15 @@ export function DashboardOverview() {
       setError(null);
 
       try {
-        const [fetchedWeights, fetchedWorkouts, fetchedPadel] = await Promise.all([
+        const [fetchedWeights, fetchedWorkouts, fetchedWinRate] = await Promise.all([
           fetchWeights(),
           fetchWorkouts(),
-          fetchLatestPadelSessions(10)
+          fetchWinRateStats(30)
         ]);
 
         setWeights(fetchedWeights);
         setWorkouts(fetchedWorkouts);
-        setPadel(fetchedPadel);
+        setWinRate(fetchedWinRate.total.winRate);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : "Kunde inte läsa dashboard-data.");
       } finally {
@@ -67,9 +66,6 @@ export function DashboardOverview() {
 
     return workouts.filter((workout) => new Date(workout.date) >= threshold);
   }, [workouts]);
-
-  const coachInsight = useMemo(() => analyzeCriticalCoach(padel.slice(0, 6)), [padel]);
-  const coachKpi = coachInsight?.kpiValue && !coachInsight.kpiValue.includes("NaN") ? coachInsight.kpiValue : null;
 
   return (
     <div className="space-y-4">
@@ -99,30 +95,30 @@ export function DashboardOverview() {
       <div className="grid gap-3 md:grid-cols-3">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="space-y-1 pb-3">
               <CardDescription>Senaste vikt</CardDescription>
               <CardTitle className="metric-nums">{lastWeight ? `${lastWeight.toFixed(1)} kg` : "Ingen data"}</CardTitle>
-              <BallAccentBadge label="Statistik" className="mt-1 w-fit" />
+              <BallAccentBadge label="Statistik" className="w-fit" />
             </CardHeader>
           </Card>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="space-y-1 pb-3">
               <CardDescription>Pass senaste 7 dagar</CardDescription>
               <CardTitle className="metric-nums">{loading ? "..." : lastSevenDays.length}</CardTitle>
-              <BallAccentBadge label="Volym" className="mt-1 w-fit" />
+              <BallAccentBadge label="Volym" className="w-fit" />
             </CardHeader>
           </Card>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
           <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Coach-KPI</CardDescription>
-              <CardTitle className="metric-nums">{coachKpi ?? "Behöver fler pass"}</CardTitle>
-              <BallAccentBadge label="Analys" className="mt-1 w-fit" />
+            <CardHeader className="space-y-1 pb-3">
+              <CardDescription>Vinstprocent (30 dagar)</CardDescription>
+              <CardTitle className="metric-nums">{winRate === null ? "Ingen data" : `${winRate.toFixed(1)}%`}</CardTitle>
+              <BallAccentBadge label="Analys" className="w-fit" />
             </CardHeader>
           </Card>
         </motion.div>

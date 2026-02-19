@@ -12,7 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/padel", label: "Logga pass", icon: Activity },
   { href: "/weights", label: "Viktlogg", icon: Scale },
   { href: "/workouts", label: "Passlogg", icon: Grid2x2 },
-  { href: "/coach", label: "Kritisk Coach", icon: Dumbbell }
+  { href: "/coach", label: "Statistik", icon: Dumbbell }
 ];
 
 export const PAGE_TITLES: Record<string, string> = {
@@ -20,5 +20,5 @@ export const PAGE_TITLES: Record<string, string> = {
   "/padel": "Padel-logg",
   "/weights": "Viktlogg",
   "/workouts": "Passlogg",
-  "/coach": "Kritisk Coach"
+  "/coach": "Statistik"
 };

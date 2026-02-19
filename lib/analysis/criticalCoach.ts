@@ -2,23 +2,33 @@ import type { WorkoutWithPadel } from "@/lib/types";
 
 export interface CoachInsight {
   windowSize: number;
-  kpiTitle: string;
-  kpiValue: string;
+  metricTitle: string;
+  metricValue: string;
   pattern: string;
   alternatives: [string, string];
   challenge: string;
 }
 
-function estimateWinRate(results: Array<string | null>) {
-  const normalized = results
+function estimateWinRate(sessions: WorkoutWithPadel[]) {
+  const statuses = sessions
+    .map((session) => session.padel_session?.match_status)
+    .filter((status): status is "win" | "loss" => status === "win" || status === "loss");
+
+  if (statuses.length > 0) {
+    const wins = statuses.filter((status) => status === "win").length;
+    return wins / statuses.length;
+  }
+
+  const results = sessions
+    .map((session) => session.padel_session?.results)
     .filter((result): result is string => Boolean(result?.trim()))
     .map((result) => result.toLowerCase());
 
-  if (!normalized.length) {
+  if (!results.length) {
     return null;
   }
 
-  const wins = normalized.filter(
+  const wins = results.filter(
     (result) =>
       result.includes("w") ||
       result.includes("vinst") ||
@@ -27,7 +37,7 @@ function estimateWinRate(results: Array<string | null>) {
       result.includes("2-1")
   ).length;
 
-  return wins / normalized.length;
+  return wins / results.length;
 }
 
 function toNumber(value: number | string | null | undefined) {
@@ -59,12 +69,11 @@ export function analyzeCriticalCoach(sessions: WorkoutWithPadel[]): CoachInsight
   const avgFeeling = Number.isFinite(rawAvgFeeling) ? rawAvgFeeling : 0;
   const avgDuration = Number.isFinite(rawAvgDuration) ? rawAvgDuration : 0;
 
-  const rawQualityRatio = avgIntensity === 0 ? 0 : avgFeeling / avgIntensity;
-  const qualityRatio = Number.isFinite(rawQualityRatio) ? rawQualityRatio : 0;
-  const winRate = estimateWinRate(scoped.map((session) => session.padel_session?.results ?? null));
-
-  const kpiTitle = "KPI: Kvalitetskvot (känsla/intensitet)";
-  const kpiValue = `${qualityRatio.toFixed(2)} (${avgFeeling.toFixed(1)}/${avgIntensity.toFixed(1)})`;
+  const rawQualityRatio = avgIntensity === 0 ? 1 : avgFeeling / avgIntensity;
+  const qualityRatio = Number.isFinite(rawQualityRatio) ? rawQualityRatio : 1;
+  const winRate = estimateWinRate(scoped);
+  const metricTitle = "Vinstprocent";
+  const metricValue = winRate === null ? "Ingen matchdata" : `${Math.round(winRate * 100)}%`;
 
   let pattern =
     "Du tränar relativt jämnt, men känslan följer inte alltid intensiteten. Det tyder på att uppladdning och återhämtning styr utfallet mer än total mängd.";
@@ -93,8 +102,8 @@ export function analyzeCriticalCoach(sessions: WorkoutWithPadel[]): CoachInsight
 
   return {
     windowSize,
-    kpiTitle,
-    kpiValue,
+    metricTitle,
+    metricValue,
     pattern,
     alternatives,
     challenge
