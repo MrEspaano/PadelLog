@@ -126,6 +126,8 @@ export async function POST(request: Request) {
     if (type !== "padel") {
       if (painLogs.length > 0) {
         for (const painLog of painLogs.slice(0, 2)) {
+          const painType = painLog.pain_type ?? null;
+          const painNote = painLog.pain_note ?? null;
           await t`
             insert into pain_logs (
               user_id,
@@ -140,8 +142,8 @@ export async function POST(request: Request) {
               ${createdWorkout.id},
               ${painLog.pain_area},
               ${painLog.pain_intensity_0_10},
-              ${painLog.pain_type},
-              ${painLog.pain_note}
+              ${painType},
+              ${painNote}
             )
           `;
         }
@@ -218,6 +220,8 @@ export async function POST(request: Request) {
 
     if (painLogs.length > 0) {
       for (const painLog of painLogs.slice(0, 2)) {
+        const painType = painLog.pain_type ?? null;
+        const painNote = painLog.pain_note ?? null;
         await t`
           insert into pain_logs (
             user_id,
@@ -232,8 +236,8 @@ export async function POST(request: Request) {
             ${createdWorkout.id},
             ${painLog.pain_area},
             ${painLog.pain_intensity_0_10},
-            ${painLog.pain_type},
-            ${painLog.pain_note}
+            ${painType},
+            ${painNote}
           )
         `;
       }
