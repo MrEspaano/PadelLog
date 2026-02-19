@@ -276,7 +276,7 @@ export function PadelWizard() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -14 }}
                 transition={{ duration: 0.22 }}
-                className="rounded-xl border border-padel-line/60 bg-white/85 p-4"
+                className="rounded-xl border border-padel-line/60 bg-white/85 p-4 dark:border-slate-700/85 dark:bg-gradient-to-br dark:from-[#1a2a40] dark:to-[#111e32]"
               >
                 <p className="text-sm text-muted-foreground">
                   Steg {stepIndex + 1}/{steps.length}
@@ -569,7 +569,7 @@ export function PadelWizard() {
                 ) : null}
 
                 {showPainPrompt ? (
-                  <div className="rounded-lg border border-padel-line/60 bg-white p-3">
+                  <div className="rounded-lg border border-padel-line/60 bg-white p-3 dark:border-slate-700/85 dark:bg-slate-900/75">
                     <p className="text-sm font-medium">Vill du logga smärta kopplat till detta pass?</p>
                     <div className="mt-2 flex gap-2">
                       <Button size="sm" onClick={() => setShowPainModal(true)}>
@@ -589,7 +589,7 @@ export function PadelWizard() {
 
       {showPainModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
-          <div className="w-full max-w-2xl rounded-xl border bg-white p-4 shadow-lg">
+          <div className="w-full max-w-2xl rounded-xl border bg-white p-4 shadow-lg dark:border-slate-700/85 dark:bg-gradient-to-br dark:from-[#15243a] dark:to-[#101b2f]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Smärtlogg</h3>
               <Button variant="ghost" size="sm" onClick={() => setShowPainModal(false)}>
@@ -600,7 +600,7 @@ export function PadelWizard() {
 
             <div className="space-y-3">
               {painDrafts.map((draft, index) => (
-                <div key={`pain-${index}`} className="rounded-lg border p-3">
+                <div key={`pain-${index}`} className="rounded-lg border p-3 dark:border-slate-700/85 dark:bg-slate-900/55">
                   <div className="grid gap-2 md:grid-cols-3">
                     <div>
                       <Label>Kroppsdel</Label>
