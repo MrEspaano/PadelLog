@@ -1,5 +1,6 @@
 import { BallAccentBadge } from "@/components/padel/BallAccentBadge";
 import { PadelIcon } from "@/components/padel/PadelIcon";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface MobileHeaderProps {
   title: string;
@@ -18,7 +19,10 @@ export function MobileHeader({ title }: MobileHeaderProps) {
             <h2 className="font-display text-lg font-semibold">{title}</h2>
           </div>
         </div>
-        <BallAccentBadge label="Redo" />
+        <div className="flex items-center gap-2">
+          <ThemeToggle className="h-9 w-9" />
+          <BallAccentBadge label="Redo" />
+        </div>
       </div>
     </header>
   );

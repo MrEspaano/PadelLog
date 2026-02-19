@@ -3,6 +3,7 @@ import { sv } from "date-fns/locale";
 
 import { BallAccentBadge } from "@/components/padel/BallAccentBadge";
 import { PadelIcon } from "@/components/padel/PadelIcon";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 
 interface DesktopTopbarProps {
@@ -24,7 +25,10 @@ export function DesktopTopbar({ title, userEmail }: DesktopTopbarProps) {
       </div>
 
       <div className="text-right">
-        <BallAccentBadge label="Match mode" className="mb-2" />
+        <div className="mb-2 flex items-center justify-end gap-2">
+          <ThemeToggle />
+          <BallAccentBadge label="Match mode" />
+        </div>
         <Badge variant="secondary">Inloggad</Badge>
         {userEmail ? <p className="mt-1 text-sm text-muted-foreground">{userEmail}</p> : null}
       </div>
