@@ -186,43 +186,83 @@ async function safeInsertPadelSession(
       throw error;
     }
 
-    // Fallback for environments where the latest padel_sessions columns are not yet migrated.
-    const legacyPadelRows = await t`
-      insert into padel_sessions (
-        workout_id,
-        session_format,
-        partner,
-        opponents,
-        results,
-        tags,
-        ball_share
-      )
-      values (
-        ${workoutId},
-        ${padel?.session_format ? String(padel.session_format) : null},
-        ${padel?.partner ? String(padel.partner) : null},
-        ${padel?.opponents ? String(padel.opponents) : null},
-        ${padel?.results ? String(padel.results) : null},
-        ${Array.isArray(padel?.tags) ? padel.tags : []},
-        ${parseNumber(padel?.ball_share)}
-      )
-      returning
-        id,
-        workout_id,
-        session_format,
-        partner,
-        opponents,
-        results,
-        null::text as match_status,
-        null::text as unforced_errors_level,
-        null::text as coach_summary,
-        '{}'::text[] as coach_tags,
-        tags,
-        ball_share,
-        created_at
-    `;
+    try {
+      // Fallback for environments where latest padel_sessions columns are not yet migrated.
+      const legacyPadelRows = await t`
+        insert into padel_sessions (
+          workout_id,
+          session_format,
+          partner,
+          opponents,
+          results,
+          tags,
+          ball_share
+        )
+        values (
+          ${workoutId},
+          ${padel?.session_format ? String(padel.session_format) : null},
+          ${padel?.partner ? String(padel.partner) : null},
+          ${padel?.opponents ? String(padel.opponents) : null},
+          ${padel?.results ? String(padel.results) : null},
+          ${Array.isArray(padel?.tags) ? padel.tags : []},
+          ${parseNumber(padel?.ball_share)}
+        )
+        returning
+          id,
+          workout_id,
+          session_format,
+          partner,
+          opponents,
+          results,
+          null::text as match_status,
+          null::text as unforced_errors_level,
+          null::text as coach_summary,
+          '{}'::text[] as coach_tags,
+          coalesce(tags, '{}'::text[]) as tags,
+          ball_share,
+          created_at
+      `;
 
-    return legacyPadelRows[0];
+      return legacyPadelRows[0];
+    } catch (legacyError) {
+      if (!isSchemaDriftError(legacyError)) {
+        throw legacyError;
+      }
+
+      // Minimal fallback for very old schemas.
+      const minimalPadelRows = await t`
+        insert into padel_sessions (
+          workout_id,
+          session_format,
+          partner,
+          opponents,
+          results
+        )
+        values (
+          ${workoutId},
+          ${padel?.session_format ? String(padel.session_format) : null},
+          ${padel?.partner ? String(padel.partner) : null},
+          ${padel?.opponents ? String(padel.opponents) : null},
+          ${padel?.results ? String(padel.results) : null}
+        )
+        returning
+          id,
+          workout_id,
+          session_format,
+          partner,
+          opponents,
+          results,
+          null::text as match_status,
+          null::text as unforced_errors_level,
+          null::text as coach_summary,
+          '{}'::text[] as coach_tags,
+          '{}'::text[] as tags,
+          null::numeric as ball_share,
+          created_at
+      `;
+
+      return minimalPadelRows[0];
+    }
   }
 }
 
