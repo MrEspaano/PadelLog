@@ -43,6 +43,71 @@ function normalizePainLogs(value: unknown): PainLogInsert[] {
     .filter((log) => Number.isFinite(log.pain_intensity_0_10) && log.pain_intensity_0_10 >= 0 && log.pain_intensity_0_10 <= 10);
 }
 
+function isMissingPainLogsTable(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("relation") && message.includes("pain_logs") && message.includes("does not exist");
+}
+
+async function safeInsertPainLogs(
+  t: typeof sql,
+  userId: string,
+  workoutId: string,
+  painLogs: PainLogInsert[]
+) {
+  if (painLogs.length === 0) {
+    return;
+  }
+
+  try {
+    for (const painLog of painLogs.slice(0, 2)) {
+      const painType = painLog.pain_type ?? null;
+      const painNote = painLog.pain_note ?? null;
+      await t`
+        insert into pain_logs (
+          user_id,
+          workout_id,
+          pain_area,
+          pain_intensity_0_10,
+          pain_type,
+          pain_note
+        )
+        values (
+          ${userId},
+          ${workoutId},
+          ${painLog.pain_area},
+          ${painLog.pain_intensity_0_10},
+          ${painType},
+          ${painNote}
+        )
+      `;
+    }
+  } catch (error) {
+    if (!isMissingPainLogsTable(error)) {
+      throw error;
+    }
+  }
+}
+
+async function safeFetchPainRows(t: typeof sql, workoutId: string) {
+  try {
+    return await t`
+      select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
+      from pain_logs
+      where workout_id = ${workoutId}
+      order by created_at desc
+    `;
+  } catch (error) {
+    if (isMissingPainLogsTable(error)) {
+      return [];
+    }
+    throw error;
+  }
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -55,32 +120,62 @@ export async function GET(request: Request) {
   const type = searchParams.get("type");
   const limit = parseNumber(searchParams.get("limit"));
 
-  const rows = await sql`
-    select
-      w.id,
-      w.user_id,
-      w.date::text as date,
-      w.type,
-      w.duration_min,
-      w.intensity_1_5,
-      w.feeling_1_5,
-      w.note,
-      w.created_at,
-      row_to_json(ps) as padel_session,
-      coalesce((
-        select json_agg(pl order by pl.created_at desc)
-        from pain_logs pl
-        where pl.workout_id = w.id
-      ), '[]'::json) as pain_logs
-    from workouts w
-    left join padel_sessions ps on ps.workout_id = w.id
-    where w.user_id = ${session.user.id}
-      and (${startDate}::date is null or w.date >= ${startDate}::date)
-      and (${endDate}::date is null or w.date <= ${endDate}::date)
-      and (${type}::text is null or w.type = ${type}::text)
-    order by w.date desc, w.created_at desc
-    limit ${limit && limit > 0 ? limit : 500}
-  `;
+  let rows: unknown[] = [];
+  try {
+    rows = await sql`
+      select
+        w.id,
+        w.user_id,
+        w.date::text as date,
+        w.type,
+        w.duration_min,
+        w.intensity_1_5,
+        w.feeling_1_5,
+        w.note,
+        w.created_at,
+        row_to_json(ps) as padel_session,
+        coalesce((
+          select json_agg(pl order by pl.created_at desc)
+          from pain_logs pl
+          where pl.workout_id = w.id
+        ), '[]'::json) as pain_logs
+      from workouts w
+      left join padel_sessions ps on ps.workout_id = w.id
+      where w.user_id = ${session.user.id}
+        and (${startDate}::date is null or w.date >= ${startDate}::date)
+        and (${endDate}::date is null or w.date <= ${endDate}::date)
+        and (${type}::text is null or w.type = ${type}::text)
+      order by w.date desc, w.created_at desc
+      limit ${limit && limit > 0 ? limit : 500}
+    `;
+  } catch (error) {
+    if (!isMissingPainLogsTable(error)) {
+      throw error;
+    }
+
+    rows = await sql`
+      select
+        w.id,
+        w.user_id,
+        w.date::text as date,
+        w.type,
+        w.duration_min,
+        w.intensity_1_5,
+        w.feeling_1_5,
+        w.note,
+        w.created_at,
+        row_to_json(ps) as padel_session,
+        '[]'::json as pain_logs
+      from workouts w
+      left join padel_sessions ps on ps.workout_id = w.id
+      where w.user_id = ${session.user.id}
+        and (${startDate}::date is null or w.date >= ${startDate}::date)
+        and (${endDate}::date is null or w.date <= ${endDate}::date)
+        and (${type}::text is null or w.type = ${type}::text)
+      order by w.date desc, w.created_at desc
+      limit ${limit && limit > 0 ? limit : 500}
+    `;
+  }
 
   return NextResponse.json(rows);
 }
@@ -124,37 +219,8 @@ export async function POST(request: Request) {
     const createdWorkout = workoutRows[0];
 
     if (type !== "padel") {
-      if (painLogs.length > 0) {
-        for (const painLog of painLogs.slice(0, 2)) {
-          const painType = painLog.pain_type ?? null;
-          const painNote = painLog.pain_note ?? null;
-          await t`
-            insert into pain_logs (
-              user_id,
-              workout_id,
-              pain_area,
-              pain_intensity_0_10,
-              pain_type,
-              pain_note
-            )
-            values (
-              ${session.user.id},
-              ${createdWorkout.id},
-              ${painLog.pain_area},
-              ${painLog.pain_intensity_0_10},
-              ${painType},
-              ${painNote}
-            )
-          `;
-        }
-      }
-
-      const painRows = await t`
-        select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
-        from pain_logs
-        where workout_id = ${createdWorkout.id}
-        order by created_at desc
-      `;
+      await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
+      const painRows = await safeFetchPainRows(t, createdWorkout.id);
 
       return {
         ...createdWorkout,
@@ -218,37 +284,8 @@ export async function POST(request: Request) {
         created_at
     `;
 
-    if (painLogs.length > 0) {
-      for (const painLog of painLogs.slice(0, 2)) {
-        const painType = painLog.pain_type ?? null;
-        const painNote = painLog.pain_note ?? null;
-        await t`
-          insert into pain_logs (
-            user_id,
-            workout_id,
-            pain_area,
-            pain_intensity_0_10,
-            pain_type,
-            pain_note
-          )
-          values (
-            ${session.user.id},
-            ${createdWorkout.id},
-            ${painLog.pain_area},
-            ${painLog.pain_intensity_0_10},
-            ${painType},
-            ${painNote}
-          )
-        `;
-      }
-    }
-
-    const painRows = await t`
-      select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
-      from pain_logs
-      where workout_id = ${createdWorkout.id}
-      order by created_at desc
-    `;
+    await safeInsertPainLogs(t, session.user.id, createdWorkout.id, painLogs);
+    const painRows = await safeFetchPainRows(t, createdWorkout.id);
 
     return {
       ...createdWorkout,
