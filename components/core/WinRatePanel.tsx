@@ -6,13 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchWinRateStats } from "@/lib/data/queries";
 
-const FILTERS = [
+type DaysFilter = 30 | 90 | "all";
+
+const FILTERS: Array<{ label: string; value: DaysFilter }> = [
   { label: "30 dagar", value: 30 },
   { label: "90 dagar", value: 90 },
-  { label: "Allt", value: "all" as const }
+  { label: "Allt", value: "all" }
 ];
-
-type DaysFilter = 30 | 90 | "all";
 
 function formatStatus(status: string | null | undefined) {
   if (status === "win") return "W";
