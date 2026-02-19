@@ -120,7 +120,7 @@ export async function GET(request: Request) {
   const type = searchParams.get("type");
   const limit = parseNumber(searchParams.get("limit"));
 
-  let rows: unknown[] = [];
+  let rows: readonly unknown[] = [];
   try {
     rows = await sql`
       select
