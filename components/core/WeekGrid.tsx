@@ -132,7 +132,7 @@ export function WeekGrid() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-xl border border-padel-line/60 bg-white/75 p-4 dark:border-slate-700/80 dark:bg-slate-900/72"
+            className="rounded-xl border border-padel-line/60 bg-white/75 p-4 dark:border-slate-700/85 dark:bg-gradient-to-br dark:from-[#15243a] dark:to-[#0f1b2e]"
           >
             <div className="mb-3 flex items-center justify-between">
               <h4 className="font-semibold">{format(parseISODate(selectedDate), "EEEE d MMMM")}</h4>
