@@ -86,110 +86,80 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   try {
-    const result = await sql.begin(async (t) => {
-      const updatedWorkoutRows = await t`
-        update workouts
-        set
-          date = ${date},
-          type = ${type},
-          duration_min = ${durationMin},
-          intensity_1_5 = ${parseNumber((workout as { intensity_1_5?: unknown }).intensity_1_5)},
-          feeling_1_5 = ${parseNumber((workout as { feeling_1_5?: unknown }).feeling_1_5)},
-          note = ${((workout as { note?: unknown }).note ? String((workout as { note?: unknown }).note) : null)}
-        where id = ${workoutId}
-          and user_id = ${session.user.id}
-        returning *
+    const updatedWorkoutRows = await sql`
+      update workouts
+      set
+        date = ${date},
+        type = ${type},
+        duration_min = ${durationMin},
+        intensity_1_5 = ${parseNumber((workout as { intensity_1_5?: unknown }).intensity_1_5)},
+        feeling_1_5 = ${parseNumber((workout as { feeling_1_5?: unknown }).feeling_1_5)},
+        note = ${((workout as { note?: unknown }).note ? String((workout as { note?: unknown }).note) : null)}
+      where id = ${workoutId}
+        and user_id = ${session.user.id}
+      returning *
+    `;
+
+    if (updatedWorkoutRows.length === 0) {
+      return NextResponse.json({ error: "Passet hittades inte eller tillhör inte användaren." }, { status: 404 });
+    }
+
+    const updatedWorkout = updatedWorkoutRows[0];
+    let updatedPadelSession: Record<string, unknown> | null = null;
+
+    if (type === "padel") {
+      const existingPadel = await sql`
+        select id
+        from padel_sessions
+        where workout_id = ${workoutId}
+        limit 1
       `;
 
-      if (updatedWorkoutRows.length === 0) {
-        return null;
-      }
-
-      const updatedWorkout = updatedWorkoutRows[0];
-      let updatedPadelSession: Record<string, unknown> | null = null;
-
-      if (type === "padel") {
-        const existingPadel = await t`
-          select id
-          from padel_sessions
-          where workout_id = ${workoutId}
-          limit 1
-        `;
-
-        if (existingPadel.length > 0) {
-          try {
-            const updatedPadelRows = await t`
-              update padel_sessions
-              set
-                session_format = ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
-                partner = ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
-                opponents = ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
-                results = ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
-                match_status = ${parseMatchStatus((padel as { match_status?: unknown })?.match_status)},
-                unforced_errors_level = ${parseUnforcedErrorsLevel((padel as { unforced_errors_level?: unknown })?.unforced_errors_level)},
-                tags = ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
-                ball_share = ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
-              where workout_id = ${workoutId}
-              returning
-                id,
-                workout_id,
-                session_format,
-                partner,
-                opponents,
-                results,
-                match_status,
-                unforced_errors_level,
-                coach_summary,
-                coach_tags,
-                tags,
-                ball_share,
-                created_at
-            `;
-            updatedPadelSession = updatedPadelRows[0] ?? null;
-          } catch (error) {
-            if (!isSchemaDriftError(error)) {
-              throw error;
-            }
-
-            const updatedPadelRows = await t`
-              update padel_sessions
-              set
-                session_format = ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
-                partner = ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
-                opponents = ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
-                results = ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
-                tags = ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
-                ball_share = ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
-              where workout_id = ${workoutId}
-              returning
-                id,
-                workout_id,
-                session_format,
-                partner,
-                opponents,
-                results,
-                null::text as match_status,
-                null::text as unforced_errors_level,
-                null::text as coach_summary,
-                '{}'::text[] as coach_tags,
-                coalesce(tags, '{}'::text[]) as tags,
-                ball_share,
-                created_at
-            `;
-            updatedPadelSession = updatedPadelRows[0] ?? null;
+      if (existingPadel.length > 0) {
+        try {
+          const updatedPadelRows = await sql`
+            update padel_sessions
+            set
+              session_format = ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
+              partner = ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
+              opponents = ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
+              results = ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
+              match_status = ${parseMatchStatus((padel as { match_status?: unknown })?.match_status)},
+              unforced_errors_level = ${parseUnforcedErrorsLevel((padel as { unforced_errors_level?: unknown })?.unforced_errors_level)},
+              tags = ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
+              ball_share = ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
+            where workout_id = ${workoutId}
+            returning
+              id,
+              workout_id,
+              session_format,
+              partner,
+              opponents,
+              results,
+              match_status,
+              unforced_errors_level,
+              coach_summary,
+              coach_tags,
+              tags,
+              ball_share,
+              created_at
+          `;
+          updatedPadelSession = updatedPadelRows[0] ?? null;
+        } catch (error) {
+          if (!isSchemaDriftError(error)) {
+            throw error;
           }
-        } else {
-          const createdPadelRows = await t`
-            insert into padel_sessions (workout_id, session_format, partner, opponents, results, tags, ball_share)
-            values (
-              ${workoutId},
-              ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
-              ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
-              ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
-              ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
-              ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
-              ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
-            )
+
+          const updatedPadelRows = await sql`
+            update padel_sessions
+            set
+              session_format = ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
+              partner = ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
+              opponents = ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
+              results = ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
+              tags = ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
+              ball_share = ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
+            where workout_id = ${workoutId}
             returning
               id,
               workout_id,
@@ -205,27 +175,51 @@ export async function PUT(request: Request, context: RouteContext) {
               ball_share,
               created_at
           `;
-          updatedPadelSession = createdPadelRows[0] ?? null;
+          updatedPadelSession = updatedPadelRows[0] ?? null;
         }
+      } else {
+        const createdPadelRows = await sql`
+          insert into padel_sessions (workout_id, session_format, partner, opponents, results, tags, ball_share)
+          values (
+            ${workoutId},
+            ${(padel as { session_format?: unknown })?.session_format ? String((padel as { session_format?: unknown }).session_format) : null},
+            ${(padel as { partner?: unknown })?.partner ? String((padel as { partner?: unknown }).partner) : null},
+            ${(padel as { opponents?: unknown })?.opponents ? String((padel as { opponents?: unknown }).opponents) : null},
+            ${(padel as { results?: unknown })?.results ? String((padel as { results?: unknown }).results) : null},
+            ${Array.isArray((padel as { tags?: unknown[] })?.tags) ? (padel as { tags?: unknown[] }).tags : []},
+            ${parseNumber((padel as { ball_share?: unknown })?.ball_share)}
+          )
+          returning
+            id,
+            workout_id,
+            session_format,
+            partner,
+            opponents,
+            results,
+            null::text as match_status,
+            null::text as unforced_errors_level,
+            null::text as coach_summary,
+            '{}'::text[] as coach_tags,
+            coalesce(tags, '{}'::text[]) as tags,
+            ball_share,
+            created_at
+        `;
+        updatedPadelSession = createdPadelRows[0] ?? null;
       }
-
-      const painRows = await t`
-        select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
-        from pain_logs
-        where workout_id = ${workoutId}
-        order by created_at desc
-      `.catch(() => []);
-
-      return {
-        ...updatedWorkout,
-        padel_session: type === "padel" ? updatedPadelSession : null,
-        pain_logs: painRows
-      };
-    });
-
-    if (!result) {
-      return NextResponse.json({ error: "Passet hittades inte eller tillhör inte användaren." }, { status: 404 });
     }
+
+    const painRows = await sql`
+      select id, user_id, workout_id, pain_area, pain_intensity_0_10, pain_type, pain_note, created_at
+      from pain_logs
+      where workout_id = ${workoutId}
+      order by created_at desc
+    `.catch(() => []);
+
+    const result = {
+      ...updatedWorkout,
+      padel_session: type === "padel" ? updatedPadelSession : null,
+      pain_logs: painRows
+    };
 
     return NextResponse.json(result);
   } catch (error) {
